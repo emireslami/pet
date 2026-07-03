@@ -2,13 +2,14 @@ import {
   ArrowLeftOutlined,
   CameraOutlined,
   CheckCircleFilled,
-  ClockCircleOutlined,
   FileTextOutlined,
   HeartFilled,
-  MedicineBoxOutlined,
+  HeartOutlined,
   MobileOutlined,
+  PlusOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
+  UserOutlined,
 } from "@ant-design/icons";
 import { Button, Tag } from "antd";
 
@@ -16,12 +17,6 @@ const features = [
   { icon: <FileTextOutlined />, title: "پرونده پزشکی یکپارچه", text: "ویزیت‌ها، آزمایش‌ها، واکسن‌ها، داروها و اسناد همیشه مرتب و در دسترس‌اند." },
   { icon: <CameraOutlined />, title: "ثبت هوشمند با تصویر", text: "از نسخه، فاکتور یا نتیجه آزمایش عکس بگیرید؛ اطلاعات به فرم قابل بازبینی تبدیل می‌شود." },
   { icon: <TeamOutlined />, title: "همراه تمام اعضای خانواده", text: "مالک پرونده می‌تواند دسترسی مشاهده یا ثبت اطلاعات را برای دیگران مدیریت کند." },
-];
-
-const timeline = [
-  { date: "امروز", title: "چکاپ دوره‌ای", meta: "کلینیک سپیدار", color: "green" },
-  { date: "۹ روز دیگر", title: "واکسن هاری", meta: "یادآوری برای دارچین", color: "orange" },
-  { date: "فعال", title: "مکمل آهن", meta: "روزی یک مرتبه", color: "blue" },
 ];
 
 export default function LandingPage() {
@@ -46,14 +41,12 @@ export default function LandingPage() {
           <div className="visual-glow" />
           <div className="phone-frame">
             <div className="phone-top"><span>۹:۴۱</span><i /></div>
-            <div className="phone-brand"><span><HeartFilled /></span><div><b>سلام، امیر</b><small>وضعیت سلامت پت‌ها</small></div><span className="mini-avatar">ا</span></div>
-            <div className="pet-switch"><button className="selected"><i className="pet-dot darchin">د</i><span>دارچین<small>سالم</small></span></button><button><i className="pet-dot kinder">ک</i><span>کیندر<small>پیگیری</small></span></button></div>
-            <div className="mobile-score"><div><span>شاخص سلامت</span><b>عالی</b></div><strong>۹۲<small>٪</small></strong></div>
-            <h4>برنامه پیش رو</h4>
-            <div className="mini-timeline">{timeline.map((x) => <div key={x.title}><i className={x.color}>{x.title === "مکمل آهن" ? <MedicineBoxOutlined /> : <ClockCircleOutlined />}</i><span><b>{x.title}</b><small>{x.meta}</small></span><em>{x.date}</em></div>)}</div>
+            <div className="phone-brand"><span><HeartFilled /></span><div><b>پت‌پرونده</b><small>فضای سلامت حیوانات شما</small></div><span className="mini-avatar"><UserOutlined /></span></div>
+            <div className="fresh-preview"><HeartOutlined /><h3>حساب شما آماده است</h3><p>اولین پرونده پت خود را بسازید و ثبت سوابق پزشکی را شروع کنید.</p><button><PlusOutlined /> ساخت اولین پرونده</button></div>
+            <div className="fresh-checks"><span><CheckCircleFilled /> بدون اطلاعات نمایشی</span><span><SafetyCertificateOutlined /> فضای خصوصی شما</span><span><FileTextOutlined /> آماده ثبت اطلاعات واقعی</span></div>
           </div>
-          <div className="floating-card float-vaccine"><span><CheckCircleFilled /></span><div><b>واکسن ثبت شد</b><small>پرونده دارچین به‌روز شد</small></div></div>
-          <div className="floating-card float-family"><div className="family-avatars"><i>م</i><i>پ</i><i>د</i></div><div><b>پرونده مشترک</b><small>۳ عضو خانواده</small></div></div>
+          <div className="floating-card float-vaccine"><span><SafetyCertificateOutlined /></span><div><b>فضای امن و خصوصی</b><small>فقط افراد مجاز دسترسی دارند</small></div></div>
+          <div className="floating-card float-family"><span><TeamOutlined /></span><div><b>دسترسی قابل مدیریت</b><small>مشاهده یا ثبت اطلاعات</small></div></div>
         </div>
       </section>
 
