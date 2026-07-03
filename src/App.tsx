@@ -42,6 +42,7 @@ import {
 import { events, medications, pets, reminders, vaccines } from "./mockData";
 import type { HealthStatus, Pet } from "./types";
 import SmartEntryModal from "./SmartEntryModal";
+import SharePetModal from "./SharePetModal";
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
@@ -290,11 +291,10 @@ function Dashboard({ openPet, onAdd }: { openPet: (p: Pet) => void; onAdd: () =>
 
 function Profile({ pet, back }: { pet: Pet; back: () => void }) {
   const timeline = events.filter((e) => e.petId === pet.id);
+  const [shareOpen, setShareOpen] = useState(false);
   return (
     <>
-      <Button type="text" className="back" onClick={back}>
-        → بازگشت به داشبورد
-      </Button>
+      <div className="profile-actions"><Button type="text" className="back" onClick={back}>→ بازگشت به داشبورد</Button><Button onClick={() => setShareOpen(true)} icon={<TeamOutlined />}>افزودن سرپرست</Button></div>
       <Card variant="borderless" className="profile-head">
         <div className="profile-main">
           <PetMark pet={pet} size={86} />
@@ -358,6 +358,7 @@ function Profile({ pet, back }: { pet: Pet; back: () => void }) {
           })),
         ]}
       />
+      <SharePetModal pet={pet} open={shareOpen} onClose={() => setShareOpen(false)} />
     </>
   );
 }
