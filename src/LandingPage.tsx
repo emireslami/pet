@@ -29,8 +29,8 @@ export default function LandingPage() {
     <main>
       <section className="landing-hero">
         <div className="hero-copy">
-          <Tag className="hero-tag" icon={<CheckCircleFilled />}>زیرساخت دیجیتال سلامت حیوانات</Tag>
-          <h1>سلامت هر حیوان،<br/><em>در یک پرونده.</em></h1>
+          <Tag className="hero-tag" icon={<CheckCircleFilled />}>زیرساخت دیجیتال سلامت پت‌ها</Tag>
+          <h1>سلامت هر پت،<br/><em>در یک پرونده.</em></h1>
           <p>Vetrica تمام سوابق پزشکی، واکسن‌ها، داروها، آزمایش‌ها و اسناد درمانی را در محیطی امن، دقیق و یکپارچه نگهداری می‌کند.</p>
           <div className="hero-actions"><a href="/app"><Button size="large" type="primary">ساخت پرونده سلامت <ArrowLeftOutlined /></Button></a><a href="#how"><Button size="large">نحوه کار Vetrica</Button></a></div>
           <div className="hero-trust"><span><SafetyCertificateOutlined /> اطلاعات امن و خصوصی</span><span><MobileOutlined /> طراحی‌شده برای موبایل</span></div>
@@ -40,7 +40,7 @@ export default function LandingPage() {
           <div className="visual-glow" />
           <div className="phone-frame">
             <div className="phone-top"><span>۹:۴۱</span><i /></div>
-            <div className="phone-brand"><span>V</span><div><b>Vetrica</b><small>پرونده سلامت حیوانات</small></div><span className="mini-avatar"><UserOutlined /></span></div>
+            <div className="phone-brand"><span>V</span><div><b>Vetrica</b><small>پرونده سلامت پت‌ها</small></div><span className="mini-avatar"><UserOutlined /></span></div>
             <div className="fresh-preview"><HeartOutlined /><h3>حساب شما آماده است</h3><p>اولین پرونده پت خود را بسازید و ثبت سوابق پزشکی را شروع کنید.</p><button><PlusOutlined /> ساخت اولین پرونده</button></div>
             <div className="fresh-checks"><span><CheckCircleFilled /> بدون اطلاعات نمایشی</span><span><SafetyCertificateOutlined /> فضای خصوصی شما</span><span><FileTextOutlined /> آماده ثبت اطلاعات واقعی</span></div>
           </div>
@@ -62,8 +62,8 @@ export default function LandingPage() {
 
       <section className="security-section" id="security"><div><SafetyCertificateOutlined /><span><small>کنترل در اختیار شماست</small><h2>پرونده خصوصی، دسترسی شفاف</h2></span></div><p>مالک هر پت تعیین می‌کند چه کسی فقط پرونده را ببیند و چه کسی امکان مشاهده و ثبت اطلاعات داشته باشد.</p><a href="/app"><Button type="primary" size="large">ساخت پرونده <ArrowLeftOutlined /></Button></a></section>
 
-      <section className="landing-cta"><SafetyCertificateOutlined/><h2>هر حیوان، یک پرونده پزشکی کامل.</h2><p>مدیریت دقیق سلامت با اطلاعات منظم و قابل اعتماد آغاز می‌شود.</p><a href="/app"><Button size="large">ورود به Vetrica <ArrowLeftOutlined /></Button></a></section>
+      <section className="landing-cta"><SafetyCertificateOutlined/><h2>هر پت، یک پرونده پزشکی کامل.</h2><p>مدیریت دقیق سلامت با اطلاعات منظم و قابل اعتماد آغاز می‌شود.</p><a href="/app"><Button size="large">ورود به Vetrica <ArrowLeftOutlined /></Button></a></section>
     </main>
-    <footer><a className="landing-logo" href="/"><span>V</span><b>Vetrica</b></a><p>زیرساخت دیجیتال سلامت حیوانات</p><small>© ۱۴۰۵ Vetrica</small></footer>
+    <footer><a className="landing-logo" href="/"><span>V</span><b>Vetrica</b></a><p>زیرساخت دیجیتال سلامت پت‌ها</p><small>© ۱۴۰۵ Vetrica</small></footer>
   </div>;
 }

@@ -34,7 +34,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
   if (!hasSupabase || session) return <>{children}</>;
 
   return <main className="auth-page" dir="rtl">
-    <section className="auth-brand"><div className="brand-symbol">V</div><span>Vetrica</span><h1>سلامت هر حیوان، در یک پرونده.</h1><p>زیرساخت دیجیتال سلامت حیوانات برای نگهداری دقیق، امن و یکپارچه تمام سوابق پزشکی.</p><div className="family-access"><span>مالک</span><i>+</i><span>همراه</span><i>+</i><span>دامپزشک</span><b>یک پرونده سلامت واحد</b></div></section>
+    <section className="auth-brand"><div className="brand-symbol">V</div><span>Vetrica</span><h1>سلامت هر پت، در یک پرونده.</h1><p>زیرساخت دیجیتال سلامت پت‌ها برای نگهداری دقیق، امن و یکپارچه تمام سوابق پزشکی.</p><div className="family-access"><span>مالک</span><i>+</i><span>همراه</span><i>+</i><span>دامپزشک</span><b>یک پرونده سلامت واحد</b></div></section>
     <section className="auth-card"><div><SafetyCertificateOutlined /><Title level={2}>{mode === "login" ? "ورود به حساب" : "ساخت حساب جدید"}</Title><Text type="secondary">با شماره موبایل و رمز ثابت وارد شوید</Text></div>
       <Segmented block value={mode} onChange={(value) => setMode(value as typeof mode)} options={[{ value: "login", label: "ورود" }, { value: "signup", label: "ثبت‌نام" }]} />
       {error && <Alert type="error" showIcon message={error} />}

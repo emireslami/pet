@@ -130,7 +130,7 @@ export default function SmartEntryModal({ open, onClose, onSaved, pets }: { open
         {mode === "image" && <aside className="document-preview">{preview ? <Image src={preview} alt="تصویر مدرک پزشکی" /> : <FileImageOutlined /> }<b>تصویر اصلی</b><span>این فایل همراه رکورد ذخیره می‌شود</span></aside>}
         <Form form={form} layout="vertical" className="extracted-form" initialValues={{ recordType: type }} onFinish={save}>
           {mode === "image" && <Alert type="success" showIcon icon={<CheckCircleFilled />} message="اطلاعات از تصویر استخراج شد" description="موارد زیر را بازبینی و در صورت نیاز اصلاح کنید." />}
-          <div className="form-row"><Form.Item name="petId" label="حیوان" rules={[{ required: true }]}><Select placeholder="انتخاب حیوان" options={pets.map((p) => ({ value: p.id, label: p.name }))} /></Form.Item><Form.Item name="recordType" label="نوع رکورد"><Select options={recordTypes.map((x) => ({ value: x, label: x }))} /></Form.Item></div>
+          <div className="form-row"><Form.Item name="petId" label="پت" rules={[{ required: true }]}><Select placeholder="انتخاب پت" options={pets.map((p) => ({ value: p.id, label: p.name }))} /></Form.Item><Form.Item name="recordType" label="نوع رکورد"><Select options={recordTypes.map((x) => ({ value: x, label: x }))} /></Form.Item></div>
           <Form.Item name="title" label="عنوان" rules={[{ required: true, message: "عنوان را وارد کنید" }]}><Input /></Form.Item>
           <div className="form-row"><Form.Item name="date" label="تاریخ"><Input /></Form.Item><Form.Item name="amount" label="مبلغ"><Input /></Form.Item></div>
           <div className="form-row"><Form.Item name="clinic" label="کلینیک"><Input /></Form.Item><Form.Item name="veterinarian" label="دامپزشک"><Input /></Form.Item></div>
