@@ -3,7 +3,6 @@ import {
   CameraOutlined,
   CheckCircleFilled,
   FileTextOutlined,
-  HeartFilled,
   HeartOutlined,
   MobileOutlined,
   PlusOutlined,
@@ -16,13 +15,13 @@ import { Button, Tag } from "antd";
 const features = [
   { icon: <FileTextOutlined />, title: "پرونده پزشکی یکپارچه", text: "ویزیت‌ها، آزمایش‌ها، واکسن‌ها، داروها و اسناد همیشه مرتب و در دسترس‌اند." },
   { icon: <CameraOutlined />, title: "ثبت هوشمند با تصویر", text: "از نسخه، فاکتور یا نتیجه آزمایش عکس بگیرید؛ اطلاعات به فرم قابل بازبینی تبدیل می‌شود." },
-  { icon: <TeamOutlined />, title: "همراه تمام اعضای خانواده", text: "مالک پرونده می‌تواند دسترسی مشاهده یا ثبت اطلاعات را برای دیگران مدیریت کند." },
+  { icon: <TeamOutlined />, title: "پرونده سلامت مشترک", text: "مالک پرونده می‌تواند دسترسی مشاهده یا ثبت اطلاعات را برای اعضای خانواده و دامپزشک مدیریت کند." },
 ];
 
 export default function LandingPage() {
   return <div className="landing" dir="rtl">
     <header className="landing-nav">
-      <a className="landing-logo" href="/"><span><HeartFilled /></span><b>پت‌پرونده</b></a>
+      <a className="landing-logo" href="/"><span>V</span><b>Vetrica</b></a>
       <nav><a href="#features">امکانات</a><a href="#how">نحوه کار</a><a href="#security">امنیت</a></nav>
       <a href="/app"><Button>ورود به حساب</Button></a>
     </header>
@@ -30,18 +29,18 @@ export default function LandingPage() {
     <main>
       <section className="landing-hero">
         <div className="hero-copy">
-          <Tag className="hero-tag" icon={<CheckCircleFilled />}>پرونده سلامت دیجیتال حیوانات خانگی</Tag>
-          <h1>سلامت پت شما،<br/><em>در یک پرونده کامل و همیشه همراه</em></h1>
-          <p>تمام سوابق پزشکی، داروها، واکسن‌ها، اسناد و یادآوری‌های حیواناتتان را امن، منظم و قابل اشتراک نگه دارید.</p>
-          <div className="hero-actions"><a href="/app"><Button size="large" type="primary">ساخت پرونده رایگان <ArrowLeftOutlined /></Button></a><a href="#how"><Button size="large">ببینید چگونه کار می‌کند</Button></a></div>
+          <Tag className="hero-tag" icon={<CheckCircleFilled />}>زیرساخت دیجیتال سلامت حیوانات</Tag>
+          <h1>سلامت هر حیوان،<br/><em>در یک پرونده.</em></h1>
+          <p>Vetrica تمام سوابق پزشکی، واکسن‌ها، داروها، آزمایش‌ها و اسناد درمانی را در محیطی امن، دقیق و یکپارچه نگهداری می‌کند.</p>
+          <div className="hero-actions"><a href="/app"><Button size="large" type="primary">ساخت پرونده سلامت <ArrowLeftOutlined /></Button></a><a href="#how"><Button size="large">نحوه کار Vetrica</Button></a></div>
           <div className="hero-trust"><span><SafetyCertificateOutlined /> اطلاعات امن و خصوصی</span><span><MobileOutlined /> طراحی‌شده برای موبایل</span></div>
         </div>
 
-        <div className="hero-visual" aria-label="نمایی از داشبورد پت‌پرونده">
+        <div className="hero-visual" aria-label="نمایی از داشبورد Vetrica">
           <div className="visual-glow" />
           <div className="phone-frame">
             <div className="phone-top"><span>۹:۴۱</span><i /></div>
-            <div className="phone-brand"><span><HeartFilled /></span><div><b>پت‌پرونده</b><small>فضای سلامت حیوانات شما</small></div><span className="mini-avatar"><UserOutlined /></span></div>
+            <div className="phone-brand"><span>V</span><div><b>Vetrica</b><small>پرونده سلامت حیوانات</small></div><span className="mini-avatar"><UserOutlined /></span></div>
             <div className="fresh-preview"><HeartOutlined /><h3>حساب شما آماده است</h3><p>اولین پرونده پت خود را بسازید و ثبت سوابق پزشکی را شروع کنید.</p><button><PlusOutlined /> ساخت اولین پرونده</button></div>
             <div className="fresh-checks"><span><CheckCircleFilled /> بدون اطلاعات نمایشی</span><span><SafetyCertificateOutlined /> فضای خصوصی شما</span><span><FileTextOutlined /> آماده ثبت اطلاعات واقعی</span></div>
           </div>
@@ -50,10 +49,10 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="trust-strip"><span>یک نگاه کامل به سلامت پت</span><div>{["واکسن‌ها","داروها","آزمایش‌ها","هزینه‌ها","اسناد پزشکی"].map(x=><b key={x}><CheckCircleFilled /> {x}</b>)}</div></section>
+      <section className="trust-strip"><span>تاریخچه درمان، همیشه در دسترس</span><div>{["واکسن‌ها","داروها","آزمایش‌ها","هزینه‌ها","اسناد پزشکی"].map(x=><b key={x}><CheckCircleFilled /> {x}</b>)}</div></section>
 
       <section className="landing-features" id="features">
-        <div className="landing-section-title"><small>همه‌چیز در یک جا</small><h2>پرونده‌ای که با پت شما رشد می‌کند</h2><p>از اولین واکسن تا مراقبت‌های دوره‌ای؛ هیچ بخش مهمی از تاریخچه سلامت گم نمی‌شود.</p></div>
+        <div className="landing-section-title"><small>یکپارچگی اطلاعات سلامت</small><h2>یک عمر مراقبت، یک پرونده</h2><p>از اولین واکسن تا درمان‌های دوره‌ای، هر رویداد پزشکی قابل رهگیری و هر سند قابل جستجو باقی می‌ماند.</p></div>
         <div className="feature-grid">{features.map((f,i)=><article key={f.title} className={`feature f${i}`}><span>{f.icon}</span><h3>{f.title}</h3><p>{f.text}</p><a href="/app">شروع کنید <ArrowLeftOutlined /></a></article>)}</div>
       </section>
 
@@ -63,8 +62,8 @@ export default function LandingPage() {
 
       <section className="security-section" id="security"><div><SafetyCertificateOutlined /><span><small>کنترل در اختیار شماست</small><h2>پرونده خصوصی، دسترسی شفاف</h2></span></div><p>مالک هر پت تعیین می‌کند چه کسی فقط پرونده را ببیند و چه کسی امکان مشاهده و ثبت اطلاعات داشته باشد.</p><a href="/app"><Button type="primary" size="large">ساخت پرونده <ArrowLeftOutlined /></Button></a></section>
 
-      <section className="landing-cta"><HeartFilled/><h2>مراقبت بهتر، با اطلاعات کامل‌تر شروع می‌شود.</h2><p>همین امروز پرونده سلامت پت‌هایتان را بسازید.</p><a href="/app"><Button size="large">ورود به پت‌پرونده <ArrowLeftOutlined /></Button></a></section>
+      <section className="landing-cta"><SafetyCertificateOutlined/><h2>هر حیوان، یک پرونده پزشکی کامل.</h2><p>مدیریت دقیق سلامت با اطلاعات منظم و قابل اعتماد آغاز می‌شود.</p><a href="/app"><Button size="large">ورود به Vetrica <ArrowLeftOutlined /></Button></a></section>
     </main>
-    <footer><a className="landing-logo" href="/"><span><HeartFilled /></span><b>پت‌پرونده</b></a><p>پرونده سلامت دیجیتال حیوانات خانگی</p><small>© ۱۴۰۵ پت‌پرونده</small></footer>
+    <footer><a className="landing-logo" href="/"><span>V</span><b>Vetrica</b></a><p>زیرساخت دیجیتال سلامت حیوانات</p><small>© ۱۴۰۵ Vetrica</small></footer>
   </div>;
 }

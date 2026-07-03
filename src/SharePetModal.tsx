@@ -15,7 +15,7 @@ export default function SharePetModal({ pet, open, onClose }: { pet: Pet; open: 
         target_phone: normalizeIranPhone(phone),
         access_level: accessLevel,
       });
-      if (error) { message.error(error.message.includes("No registered") ? "این شماره هنوز در پت‌پرونده ثبت‌نام نکرده است." : "افزودن دسترسی انجام نشد."); setBusy(false); return; }
+      if (error) { message.error(error.message.includes("No registered") ? "این شماره هنوز در Vetrica ثبت‌نام نکرده است." : "افزودن دسترسی انجام نشد."); setBusy(false); return; }
     }
     message.success(`دسترسی به پرونده ${pet.name} اضافه شد.`);
     setBusy(false); form.resetFields(); onClose();
