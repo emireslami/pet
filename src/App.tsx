@@ -26,11 +26,9 @@ import {
   Descriptions,
   Drawer,
   Dropdown,
-  Form,
   Input,
   Layout,
   Menu,
-  Modal,
   Progress,
   Select,
   Space,
@@ -43,6 +41,7 @@ import {
 } from "antd";
 import { events, medications, pets, reminders, vaccines } from "./mockData";
 import type { HealthStatus, Pet } from "./types";
+import SmartEntryModal from "./SmartEntryModal";
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
 
@@ -160,14 +159,14 @@ function PetCard({ pet, onOpen }: { pet: Pet; onOpen: (p: Pet) => void }) {
     </Card>
   );
 }
-function Dashboard({ openPet }: { openPet: (p: Pet) => void }) {
+function Dashboard({ openPet, onAdd }: { openPet: (p: Pet) => void; onAdd: () => void }) {
   return (
     <>
       <SectionHead
         eyebrow="جمعه، ۱۲ تیر ۱۴۰۵"
         title="سلام، روز خوبی داشته باشید"
         action={
-          <Button type="primary" icon={<PlusOutlined />}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={onAdd}>
             ثبت رویداد پزشکی
           </Button>
         }
@@ -622,7 +621,7 @@ export default function App() {
           {pet ? (
             <Profile pet={pet} back={() => setPet(null)} />
           ) : page === "dashboard" ? (
-            <Dashboard openPet={setPet} />
+            <Dashboard openPet={setPet} onAdd={() => setModal(true)} />
           ) : (
             <GenericPage page={page} onAdd={() => setModal(true)} />
           )}
@@ -649,40 +648,7 @@ export default function App() {
           </Dropdown>
         </nav>
       </Layout>
-      <Modal
-        title="ثبت رکورد جدید"
-        open={modal}
-        onCancel={() => setModal(false)}
-        okText="ذخیره پیش‌نویس"
-        cancelText="انصراف"
-      >
-        <Form layout="vertical">
-          <Form.Item label="حیوان">
-            <Select
-              options={pets.map((p) => ({ value: p.id, label: p.name }))}
-              placeholder="انتخاب کنید"
-            />
-          </Form.Item>
-          <Form.Item label="نوع رکورد">
-            <Select
-              options={[
-                "ویزیت دامپزشکی",
-                "واکسن",
-                "دارو",
-                "آزمایش",
-                "سند",
-                "هزینه",
-              ].map((x) => ({ value: x, label: x }))}
-            />
-          </Form.Item>
-          <Form.Item label="عنوان">
-            <Input placeholder="عنوان رویداد یا رکورد" />
-          </Form.Item>
-          <Form.Item label="توضیحات">
-            <Input.TextArea rows={3} />
-          </Form.Item>
-        </Form>
-      </Modal>
+      <SmartEntryModal open={modal} onClose={() => setModal(false)} pets={pets} />
     </Layout>
   );
 }
