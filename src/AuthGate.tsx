@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { LockOutlined, MobileOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
-import { Alert, Button, Form, Input, Segmented, Typography } from "antd";
+import { MobileOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
+import { Alert, Button, Form, Input, Typography } from "antd";
 import type { Session } from "@supabase/supabase-js";
 import { hasSupabase, normalizeIranPhone, supabase } from "./lib/supabase";
 
@@ -9,9 +9,11 @@ const { Title, Text } = Typography;
 export default function AuthGate({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
-  const [mode, setMode] = useState<"login" | "signup">("login");
+  const [step, setStep] = useState<"phone" | "code">("phone");
+  const [phone, setPhone] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     if (!hasSupabase) { setReady(true); return; }
@@ -20,13 +22,33 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  const submit = async ({ phone, password, name }: { phone: string; password: string; name?: string }) => {
-    setBusy(true); setError("");
-    const credentials = { phone: normalizeIranPhone(phone), password };
-    const result = mode === "login"
-      ? await supabase.auth.signInWithPassword(credentials)
-      : await supabase.auth.signUp({ ...credentials, options: { data: { full_name: name } } });
-    if (result.error) setError(mode === "login" ? "شماره موبایل یا رمز عبور صحیح نیست." : result.error.message);
+  const requestCode = async ({ phone }: { phone: string }) => {
+    setBusy(true); setError(""); setNotice("");
+    const normalizedPhone = normalizeIranPhone(phone);
+    const { data, error } = await supabase.functions.invoke("send-login-otp", { body: { phone: normalizedPhone } });
+    if (error || data?.error) {
+      setError(data?.error || error?.message || "ارسال کد ورود ناموفق بود.");
+    } else {
+      setPhone(normalizedPhone);
+      setStep("code");
+      setNotice(data?.cooldown ? data.message : "کد ورود با پیامک ارسال شد.");
+    }
+    setBusy(false);
+  };
+
+  const verifyCode = async ({ code }: { code: string }) => {
+    setBusy(true); setError(""); setNotice("");
+    const { data, error } = await supabase.functions.invoke("verify-login-otp", { body: { phone, code } });
+    if (error || data?.error || !data?.session?.access_token || !data?.session?.refresh_token) {
+      setError(data?.error || error?.message || "کد ورود صحیح نیست.");
+      setBusy(false);
+      return;
+    }
+    const result = await supabase.auth.setSession({
+      access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
+    });
+    if (result.error) setError(result.error.message);
     setBusy(false);
   };
 
@@ -35,16 +57,21 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   return <main className="auth-page" dir="rtl">
     <section className="auth-brand"><div className="brand-symbol">V</div><span>Vetrica</span><h1>سلامت هر پت، در یک پرونده.</h1><p>زیرساخت دیجیتال سلامت پت‌ها برای نگهداری دقیق، امن و یکپارچه تمام سوابق پزشکی.</p><div className="family-access"><span>مالک</span><i>+</i><span>همراه</span><i>+</i><span>دامپزشک</span><b>یک پرونده سلامت واحد</b></div></section>
-    <section className="auth-card"><div><SafetyCertificateOutlined /><Title level={2}>{mode === "login" ? "ورود به حساب" : "ساخت حساب جدید"}</Title><Text type="secondary">با شماره موبایل و رمز ثابت وارد شوید</Text></div>
-      <Segmented block value={mode} onChange={(value) => setMode(value as typeof mode)} options={[{ value: "login", label: "ورود" }, { value: "signup", label: "ثبت‌نام" }]} />
+    <section className="auth-card"><div><SafetyCertificateOutlined /><Title level={2}>ورود به Vetrica</Title><Text type="secondary">با شماره موبایل و کد یک‌بارمصرف وارد شوید</Text></div>
+      {notice && <Alert type="success" showIcon message={notice} />}
       {error && <Alert type="error" showIcon message={error} />}
-      <Form layout="vertical" onFinish={submit} requiredMark={false}>
-        {mode === "signup" && <Form.Item name="name" label="نام و نام خانوادگی" rules={[{ required: true, message: "نام را وارد کنید" }]}><Input size="large" placeholder="مثلاً امیر اسلامی" /></Form.Item>}
+      {step === "phone" ? <Form layout="vertical" onFinish={requestCode} requiredMark={false}>
         <Form.Item name="phone" label="شماره موبایل" rules={[{ required: true, pattern: /^(\+98|0)?9\d{9}$/, message: "شماره موبایل معتبر وارد کنید" }]}><Input size="large" dir="ltr" prefix={<MobileOutlined />} placeholder="0912 123 4567" /></Form.Item>
-        <Form.Item name="password" label="رمز عبور ثابت" rules={[{ required: true, min: 8, message: "رمز عبور حداقل ۸ کاراکتر باشد" }]}><Input.Password size="large" dir="ltr" prefix={<LockOutlined />} placeholder="حداقل ۸ کاراکتر" /></Form.Item>
-        <Button htmlType="submit" type="primary" size="large" block loading={busy}>{mode === "login" ? "ورود به Vetrica" : "ساخت حساب"}</Button>
-      </Form>
-      <small>رمز عبور به‌صورت امن در Supabase Auth نگهداری می‌شود.</small>
+        <Button htmlType="submit" type="primary" size="large" block loading={busy}>دریافت کد ورود</Button>
+      </Form> : <Form layout="vertical" onFinish={verifyCode} requiredMark={false}>
+        <Form.Item label="شماره موبایل"><Input size="large" dir="ltr" value={phone} disabled /></Form.Item>
+        <Form.Item name="code" label="کد ورود" rules={[{ required: true, pattern: /^\d{6}$/, message: "کد ۶ رقمی را وارد کنید" }]}>
+          <Input size="large" dir="ltr" inputMode="numeric" maxLength={6} placeholder="123456" />
+        </Form.Item>
+        <Button htmlType="submit" type="primary" size="large" block loading={busy}>ورود</Button>
+        <Button type="link" block disabled={busy} onClick={() => { setStep("phone"); setNotice(""); setError(""); }}>تغییر شماره موبایل</Button>
+      </Form>}
+      <small>کد ورود از طریق کاوه‌نگار و الگوی otp-vertica ارسال می‌شود.</small>
     </section>
   </main>;
 }
