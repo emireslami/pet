@@ -27,11 +27,13 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
     const normalizedPhone = normalizeIranPhone(phone);
     const { data, error } = await supabase.functions.invoke("send-login-otp", { body: { phone: normalizedPhone } });
     if (error || data?.error) {
-      setError(data?.error || error?.message || "ارسال کد ورود ناموفق بود.");
+      setPhone(normalizedPhone);
+      setStep("code");
+      setNotice("ارسال پیامک فعلاً در دسترس نیست؛ کد تست 123456 فعال است.");
     } else {
       setPhone(normalizedPhone);
       setStep("code");
-      setNotice(data?.cooldown ? data.message : "کد ورود با پیامک ارسال شد.");
+      setNotice(data?.cooldown ? `${data.message} کد تست 123456 هم فعلاً فعال است.` : "کد ورود با پیامک ارسال شد. کد تست 123456 هم فعلاً فعال است.");
     }
     setBusy(false);
   };
@@ -71,7 +73,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
         <Button htmlType="submit" type="primary" size="large" block loading={busy}>ورود</Button>
         <Button type="link" block disabled={busy} onClick={() => { setStep("phone"); setNotice(""); setError(""); }}>تغییر شماره موبایل</Button>
       </Form>}
-      <small>کد ورود از طریق کاوه‌نگار و الگوی otp-vertica ارسال می‌شود.</small>
+      <small>کد ورود از طریق کاوه‌نگار و الگوی otp-vertica ارسال می‌شود. فعلاً کد تست 123456 هم فعال است.</small>
     </section>
   </main>;
 }
