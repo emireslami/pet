@@ -41,9 +41,10 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
   const set=(key:string)=>(e:{target:{value:unknown}})=>setValues(v=>({...v,[key]:String(e.target.value)}));
   const save=async(e:React.FormEvent)=>{
     e.preventDefault(); if(!values.name||!values.species)return setError("نام و گونه پت را وارد کنید.");
-    setBusy(true);setError("");const{data}=await supabase.auth.getUser();
-    const{data:created,error:dbError}=await supabase.from("pets").insert({...values,breed:values.breed||null,gender:values.gender||null,birth_date:values.birth_date||null,current_weight:values.current_weight?Number(values.current_weight):null,microchip_number:values.microchip_number||null,created_by:data.user?.id}).select("id").single();
-    if(dbError){setBusy(false);return setError("ذخیره پرونده انجام نشد.");}
+    setBusy(true);setError("");
+    const{data:createResult,error:createError}=await supabase.functions.invoke("create-pet",{body:values});
+    const created=createResult?.pet as {id?:string}|undefined;
+    if(createError||createResult?.error||!created?.id){setBusy(false);return setError(createResult?.error||"ذخیره پرونده انجام نشد.");}
     if(photo&&created?.id){const upload=await supabase.storage.from("pet-documents").upload(`${created.id}/avatar`,photo,{contentType:photo.type,upsert:true});if(upload.error)setError("پرونده ساخته شد، اما بارگذاری عکس انجام نشد.");}
     setBusy(false);setValues({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});setPhoto(null);setPhotoPreview("");onClose();onSaved();
   };
