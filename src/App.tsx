@@ -35,20 +35,103 @@ function EmptyPanel({title,text,action}:{title:string;text:string;action?:React.
   return <Card className="empty-state"><CardContent><DescriptionRounded/><Typography variant="h6">{title}</Typography><Typography color="text.secondary">{text}</Typography>{action}</CardContent></Card>;
 }
 
+const OTHER_OPTION = "سایر";
+const speciesOptions = ["سگ","گربه","پرنده","خرگوش",OTHER_OPTION];
+const breedLibrary: Record<string,string[]> = {
+  سگ: ["گلدن رتریور","لابرادور رتریور","ژرمن شپرد","هاسکی","پودل","شیتزو","پاگ","بولداگ فرانسوی","بیگل","مالتیز",OTHER_OPTION],
+  گربه: ["پرشین","اسکاتیش فولد","بریتیش شورت‌هیر","سیامی","مین کون","راگدال","اسفینکس","دی‌اس‌اچ / خیابانی",OTHER_OPTION],
+  پرنده: ["عروس هلندی","مرغ عشق","کاسکو","قناری","طوطی برزیلی","فنچ",OTHER_OPTION],
+  خرگوش: ["لوپ هلندی","مینی لوپ","نژاد هلندی","لاین‌هد","آنگورا","رکس",OTHER_OPTION],
+  [OTHER_OPTION]: [OTHER_OPTION],
+};
+const persianMonths = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+const toEnglishDigits = (value:string) => value
+  .replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+  .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+const numericOnly = (value:string) => toEnglishDigits(value).replace(/\D/g,"");
+const decimalOnly = (value:string) => toEnglishDigits(value).replace(/[^\d.]/g,"").replace(/(\..*)\./g,"$1");
+const pad2 = (value:number) => String(value).padStart(2,"0");
+function jalaliToGregorian(jy:number,jm:number,jd:number) {
+  jy+=1595;let days=-355668+(365*jy)+Math.floor(jy/33)*8+Math.floor(((jy%33)+3)/4)+jd+(jm<7?(jm-1)*31:((jm-7)*30)+186);
+  let gy=400*Math.floor(days/146097);days%=146097;
+  if(days>36524){gy+=100*Math.floor(--days/36524);days%=36524;if(days>=365)days++;}
+  gy+=4*Math.floor(days/1461);days%=1461;
+  if(days>365){gy+=Math.floor((days-1)/365);days=(days-1)%365;}
+  let gd=days+1;const sal=[0,31,((gy%4===0&&gy%100!==0)||gy%400===0)?29:28,31,30,31,30,31,31,30,31,30,31];let gm=0;
+  for(gm=1;gm<=12&&gd>sal[gm];gm++)gd-=sal[gm];
+  return [gy,gm,gd] as const;
+}
+function gregorianToJalali(gy:number,gm:number,gd:number) {
+  const gdm=[0,31,59,90,120,151,181,212,243,273,304,334];let jy=(gy<=1600)?0:979;gy-=(gy<=1600)?621:1600;
+  let gy2=(gm>2)?gy+1:gy;let days=(365*gy)+Math.floor((gy2+3)/4)-Math.floor((gy2+99)/100)+Math.floor((gy2+399)/400)-80+gd+gdm[gm-1];
+  jy+=33*Math.floor(days/12053);days%=12053;jy+=4*Math.floor(days/1461);days%=1461;
+  if(days>365){jy+=Math.floor((days-1)/365);days=(days-1)%365;}
+  const jm=days<186?1+Math.floor(days/31):7+Math.floor((days-186)/30);
+  const jd=1+(days<186?days%31:(days-186)%30);
+  return [jy,jm,jd] as const;
+}
+const jalaliToIso = (jy:string,jm:string,jd:string) => {
+  const year=Number(jy),month=Number(jm),day=Number(jd||"1");
+  if(!year||!month)return "";
+  const [gy,gm,gd]=jalaliToGregorian(year,month,day);
+  return `${gy}-${pad2(gm)}-${pad2(gd)}`;
+};
+function formatJalaliDate(iso?:string|null) {
+  if(!iso)return "";
+  const date=new Date(`${iso}T00:00:00`);
+  if(Number.isNaN(date.getTime()))return iso;
+  const [jy,jm,jd]=gregorianToJalali(date.getFullYear(),date.getMonth()+1,date.getDate());
+  return `${jd} ${persianMonths[jm-1]} ${jy}`;
+}
+const thisJalaliYear = gregorianToJalali(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate())[0];
+const jalaliYears = Array.from({length:35},(_,i)=>thisJalaliYear-i);
+
 function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:()=>void}) {
   const [values,setValues]=useState({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});
   const [busy,setBusy]=useState(false),[error,setError]=useState(""),[photo,setPhoto]=useState<File|null>(null),[photoPreview,setPhotoPreview]=useState("");
+  const [customSpecies,setCustomSpecies]=useState(""),[customBreed,setCustomBreed]=useState("");
+  const [birth,setBirth]=useState({year:"",month:"",day:""}),[age,setAge]=useState({years:"",months:""});
   const set=(key:string)=>(e:{target:{value:unknown}})=>setValues(v=>({...v,[key]:String(e.target.value)}));
+  const setSpecies=(value:string)=>{setValues(v=>({...v,species:value,breed:""}));setCustomSpecies("");setCustomBreed("");};
+  const setBirthPart=(key:"year"|"month"|"day",raw:string)=>{
+    const next={...birth,[key]:numericOnly(raw).slice(0,key==="year"?4:2)};
+    setBirth(next);setAge({years:"",months:""});
+    setValues(v=>({...v,birth_date:jalaliToIso(next.year,next.month,next.day)}));
+  };
+  const setAgePart=(key:"years"|"months",raw:string)=>{
+    const clean=numericOnly(raw).slice(0,2),next={...age,[key]:clean};
+    setAge(next);setBirth({year:"",month:"",day:""});
+    const years=Number(next.years||0),months=Number(next.months||0);
+    if(!years&&!months)return setValues(v=>({...v,birth_date:""}));
+    const now=gregorianToJalali(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate());
+    const total=(now[0]*12)+(now[1]-1)-(years*12)-months;
+    const by=Math.floor(total/12),bm=(total%12)+1;
+    setValues(v=>({...v,birth_date:jalaliToIso(String(by),String(bm),"1")}));
+  };
+  const resetForm=()=>{setValues({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});setPhoto(null);setPhotoPreview("");setCustomSpecies("");setCustomBreed("");setBirth({year:"",month:"",day:""});setAge({years:"",months:""});};
   const save=async(e:React.FormEvent)=>{
-    e.preventDefault(); if(!values.name||!values.species)return setError("نام و گونه پت را وارد کنید.");
+    e.preventDefault();
+    const species=values.species===OTHER_OPTION?customSpecies.trim():values.species;
+    const breed=values.breed===OTHER_OPTION?customBreed.trim():values.breed;
+    if(!values.name.trim()||!species)return setError("نام و گونه پت را وارد کنید.");
     setBusy(true);setError("");
-    const{data:createResult,error:createError}=await supabase.functions.invoke("create-pet",{body:values});
+    const payload={...values,name:values.name.trim(),species,breed:breed||null,current_weight:values.current_weight?Number(decimalOnly(values.current_weight)):null,microchip_number:numericOnly(values.microchip_number)||null};
+    const{data:createResult,error:createError}=await supabase.functions.invoke("create-pet",{body:payload});
     const created=createResult?.pet as {id?:string}|undefined;
     if(createError||createResult?.error||!created?.id){setBusy(false);return setError(createResult?.error||"ذخیره پرونده انجام نشد.");}
     if(photo&&created?.id){const upload=await supabase.storage.from("pet-documents").upload(`${created.id}/avatar`,photo,{contentType:photo.type,upsert:true});if(upload.error)setError("پرونده ساخته شد، اما بارگذاری عکس انجام نشد.");}
-    setBusy(false);setValues({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});setPhoto(null);setPhotoPreview("");onClose();onSaved();
+    setBusy(false);resetForm();onClose();onSaved();
   };
-  return <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm"><Box component="form" onSubmit={save}><DialogTitle>ساخت پرونده پت</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>{error&&<Alert severity="error">{error}</Alert>}<Box className="pet-photo-picker" component="label">{photoPreview?<img src={photoPreview} alt="پیش‌نمایش عکس پت"/>:<><img src={values.species==="گربه"?"/pets/default-cat.jpg":"/pets/default-dog.jpg"} alt="عکس پیش‌فرض پت"/><span>افزودن عکس پت</span></>}<input hidden type="file" accept="image/*" onChange={e=>{const selected=e.target.files?.[0];if(!selected)return;if(selected.size>5*1024*1024)return setError("حجم عکس باید کمتر از ۵ مگابایت باشد.");setPhoto(selected);setPhotoPreview(URL.createObjectURL(selected));setError("");}}/></Box><div className="form-row"><TextField label="نام پت" value={values.name} onChange={set("name")} required/><FormControl size="small" required><InputLabel>گونه</InputLabel><Select label="گونه" value={values.species} onChange={set("species")}>{["سگ","گربه","پرنده","خرگوش","سایر"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div><div className="form-row"><TextField label="نژاد" value={values.breed} onChange={set("breed")}/><FormControl size="small"><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده","نامشخص"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div><div className="form-row"><TextField label="تاریخ تولد" type="date" value={values.birth_date} onChange={set("birth_date")} slotProps={{inputLabel:{shrink:true}}}/><TextField label="وزن فعلی" type="number" value={values.current_weight} onChange={set("current_weight")}/></div><TextField label="شماره میکروچیپ" value={values.microchip_number} onChange={set("microchip_number")}/></Stack></DialogContent><DialogActions><Button onClick={onClose}>انصراف</Button><Button variant="contained" type="submit" disabled={busy}>{busy?<CircularProgress size={20}/>:"ساخت پرونده"}</Button></DialogActions></Box></Dialog>;
+  const breedOptions=breedLibrary[values.species]||[OTHER_OPTION],isOtherSpecies=values.species===OTHER_OPTION,isOtherBreed=values.breed===OTHER_OPTION;
+  return <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{paper:{className:"rtl-pet-dialog",sx:{direction:"rtl",textAlign:"right"}}}}><Box component="form" onSubmit={save}><DialogTitle>ساخت پرونده پت</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>{error&&<Alert severity="error">{error}</Alert>}<Box className="pet-photo-picker" component="label">{photoPreview?<img src={photoPreview} alt="پیش‌نمایش عکس پت"/>:<><img src={values.species==="گربه"?"/pets/default-cat.jpg":"/pets/default-dog.jpg"} alt="عکس پیش‌فرض پت"/><span>افزودن عکس پت</span></>}<input hidden type="file" accept="image/*" onChange={e=>{const selected=e.target.files?.[0];if(!selected)return;if(selected.size>5*1024*1024)return setError("حجم عکس باید کمتر از ۵ مگابایت باشد.");setPhoto(selected);setPhotoPreview(URL.createObjectURL(selected));setError("");}}/></Box>
+    <div className="form-row"><TextField label="نام پت" value={values.name} onChange={set("name")} required helperText="فارسی یا انگلیسی قابل قبول است."/><FormControl required><InputLabel>گونه</InputLabel><Select label="گونه" value={values.species} onChange={e=>setSpecies(String(e.target.value))}>{speciesOptions.map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
+    {isOtherSpecies&&<TextField label="نام گونه" value={customSpecies} onChange={e=>setCustomSpecies(e.target.value)} required helperText="اگر گونه در فهرست نیست، نام فارسی یا انگلیسی آن را وارد کنید."/>}
+    <div className="form-row"><FormControl disabled={!values.species}><InputLabel>نژاد</InputLabel><Select label="نژاد" value={values.breed} onChange={set("breed")}>{breedOptions.map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
+    {isOtherBreed&&<TextField label="نام نژاد" value={customBreed} onChange={e=>setCustomBreed(e.target.value)} helperText="نام نژاد می‌تواند فارسی یا انگلیسی باشد."/>}
+    <Box className="pet-birth-card"><Typography variant="subtitle2">تاریخ تولد شمسی</Typography><Typography color="text.secondary" variant="caption">سال و ماه کافی است؛ اگر روز وارد نشود، روز یکم ماه ذخیره می‌شود.</Typography><div className="form-row birth-row"><FormControl><InputLabel>سال</InputLabel><Select label="سال" value={birth.year} onChange={e=>setBirthPart("year",String(e.target.value))}>{jalaliYears.map(y=><MenuItem key={y} value={String(y)}>{y}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>ماه</InputLabel><Select label="ماه" value={birth.month} onChange={e=>setBirthPart("month",String(e.target.value))}>{persianMonths.map((m,i)=><MenuItem key={m} value={String(i+1)}>{m}</MenuItem>)}</Select></FormControl><TextField label="روز، اختیاری" value={birth.day} onChange={e=>setBirthPart("day",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div></Box>
+    <Box className="pet-birth-card subtle"><Typography variant="subtitle2">یا سن تقریبی را وارد کنید</Typography><div className="form-row"><TextField label="سال" value={age.years} onChange={e=>setAgePart("years",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/><TextField label="ماه" value={age.months} onChange={e=>setAgePart("months",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div></Box>
+    <div className="form-row"><TextField label="وزن فعلی" value={values.current_weight} onChange={e=>setValues(v=>({...v,current_weight:decimalOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"decimal"}}}/><TextField label="شماره میکروچیپ" value={values.microchip_number} onChange={e=>setValues(v=>({...v,microchip_number:numericOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"numeric"}}} helperText="فقط عدد؛ اعداد فارسی خودکار تبدیل می‌شوند."/></div>
+  </Stack></DialogContent><DialogActions><Button onClick={onClose}>انصراف</Button><Button variant="contained" type="submit" disabled={busy}>{busy?<CircularProgress size={20}/>:"ساخت پرونده"}</Button></DialogActions></Box></Dialog>;
 }
 
 function RecordTable({records,pets}:{records:MedicalRecord[];pets:Pet[]}) {
@@ -62,7 +145,7 @@ function Dashboard({pets,records,onAddPet,onAddRecord,onOpen}:{pets:Pet[];record
 }
 function PetProfile({pet,records,back,onAdd,onRefresh}:{pet:Pet;records:MedicalRecord[];back:()=>void;onAdd:()=>void;onRefresh:()=>void}) {
   const[share,setShare]=useState(false),[tab,setTab]=useState(0);const list=records.filter(r=>r.pet_id===pet.id);
-  return <><div className="profile-actions"><Button onClick={back}>→ بازگشت</Button><Stack direction="row"><Button startIcon={<GroupsRounded/>} onClick={()=>setShare(true)}>مدیریت دسترسی</Button><Button variant="contained" startIcon={<AddRounded/>} onClick={onAdd}>ثبت اطلاعات</Button></Stack></div><Card className="profile-head"><CardContent><div className="profile-main"><PetMark pet={pet} size={82}/><div><Typography variant="h4">{pet.name}</Typography><Typography color="text.secondary">{[pet.species,pet.breed,pet.gender].filter(Boolean).join(" · ")}</Typography></div></div><div className="pet-card-data">{[["تاریخ تولد",pet.birth_date||"ثبت نشده"],["وزن",pet.current_weight?`${pet.current_weight} کیلوگرم`:"ثبت نشده"],["میکروچیپ",pet.microchip_number||"ثبت نشده"],["تعداد سوابق",list.length]].map(([a,b])=><div key={String(a)}><small>{a}</small><b>{b}</b></div>)}</div></CardContent></Card><Tabs value={tab} onChange={(_,v)=>setTab(v)}><Tab label="نمای کلی"/><Tab label="اسناد"/></Tabs><Box sx={{mt:2}}>{tab===0?(list.length?<RecordTable records={list} pets={[pet]}/>:<EmptyPanel title="پرونده پزشکی خالی است" text="اولین سابقه پزشکی را ثبت کنید." action={<Button onClick={onAdd}>ثبت اطلاعات</Button>}/>):<EmptyPanel title="سندی ثبت نشده" text="اسناد پیوست‌شده اینجا نمایش داده می‌شوند."/ >}</Box><SharePetModal pet={pet} open={share} onClose={()=>{setShare(false);onRefresh();}}/></>;
+  return <><div className="profile-actions"><Button onClick={back}>→ بازگشت</Button><Stack direction="row"><Button startIcon={<GroupsRounded/>} onClick={()=>setShare(true)}>مدیریت دسترسی</Button><Button variant="contained" startIcon={<AddRounded/>} onClick={onAdd}>ثبت اطلاعات</Button></Stack></div><Card className="profile-head"><CardContent><div className="profile-main"><PetMark pet={pet} size={82}/><div><Typography variant="h4">{pet.name}</Typography><Typography color="text.secondary">{[pet.species,pet.breed,pet.gender].filter(Boolean).join(" · ")}</Typography></div></div><div className="pet-card-data">{[["تاریخ تولد",formatJalaliDate(pet.birth_date)||"ثبت نشده"],["وزن",pet.current_weight?`${pet.current_weight} کیلوگرم`:"ثبت نشده"],["میکروچیپ",pet.microchip_number||"ثبت نشده"],["تعداد سوابق",list.length]].map(([a,b])=><div key={String(a)}><small>{a}</small><b>{b}</b></div>)}</div></CardContent></Card><Tabs value={tab} onChange={(_,v)=>setTab(v)}><Tab label="نمای کلی"/><Tab label="اسناد"/></Tabs><Box sx={{mt:2}}>{tab===0?(list.length?<RecordTable records={list} pets={[pet]}/>:<EmptyPanel title="پرونده پزشکی خالی است" text="اولین سابقه پزشکی را ثبت کنید." action={<Button onClick={onAdd}>ثبت اطلاعات</Button>}/>):<EmptyPanel title="سندی ثبت نشده" text="اسناد پیوست‌شده اینجا نمایش داده می‌شوند."/ >}</Box><SharePetModal pet={pet} open={share} onClose={()=>{setShare(false);onRefresh();}}/></>;
 }
 
 export default function App(){

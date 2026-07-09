@@ -10,6 +10,20 @@ function json(body: unknown, status = 200) {
   });
 }
 
+function toEnglishDigits(value: unknown) {
+  return String(value ?? "")
+    .replace(/[۰-۹]/g, (digit) => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)))
+    .replace(/[٠-٩]/g, (digit) => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
+}
+
+function numericOnly(value: unknown) {
+  return toEnglishDigits(value).replace(/\D/g, "");
+}
+
+function decimalOnly(value: unknown) {
+  return toEnglishDigits(value).replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1");
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
@@ -28,6 +42,8 @@ Deno.serve(async (request) => {
     const input = await request.json();
     const name = String(input.name || "").trim();
     const species = String(input.species || "").trim();
+    const currentWeight = decimalOnly(input.current_weight);
+    const microchipNumber = numericOnly(input.microchip_number);
     if (!name || !species) throw new Error("نام و گونه پت الزامی است");
 
     const petResponse = await fetch(`${supabaseUrl}/rest/v1/pets?select=*`, {
@@ -44,8 +60,8 @@ Deno.serve(async (request) => {
         breed: input.breed || null,
         gender: input.gender || null,
         birth_date: input.birth_date || null,
-        current_weight: input.current_weight ? Number(input.current_weight) : null,
-        microchip_number: input.microchip_number || null,
+        current_weight: currentWeight ? Number(currentWeight) : null,
+        microchip_number: microchipNumber || null,
         created_by: user.id,
       }),
     });
