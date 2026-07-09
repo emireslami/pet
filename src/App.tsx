@@ -87,7 +87,7 @@ function formatJalaliDate(iso?:string|null) {
 const thisJalaliYear = gregorianToJalali(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate())[0];
 const jalaliYears = Array.from({length:35},(_,i)=>thisJalaliYear-i);
 function calculateAgeText(jy:string,jm:string,jd:string) {
-  if(!jy||!jm)return "";
+  if(!jy||!jm)return "با انتخاب سال و ماه تولد، سن تا امروز اینجا نمایش داده می‌شود.";
   const birthYear=Number(jy),birthMonth=Number(jm),birthDay=Number(jd||"1");
   const today=new Date(),[todayYear,todayMonth,todayDay]=gregorianToJalali(today.getFullYear(),today.getMonth()+1,today.getDate());
   let totalMonths=(todayYear-birthYear)*12+(todayMonth-birthMonth);
@@ -102,25 +102,15 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
   const [values,setValues]=useState({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});
   const [busy,setBusy]=useState(false),[error,setError]=useState(""),[photo,setPhoto]=useState<File|null>(null),[photoPreview,setPhotoPreview]=useState("");
   const [customSpecies,setCustomSpecies]=useState(""),[customBreed,setCustomBreed]=useState("");
-  const [birth,setBirth]=useState({year:"",month:"",day:""}),[age,setAge]=useState({years:"",months:""});
+  const [birth,setBirth]=useState({year:"",month:"",day:""});
   const set=(key:string)=>(e:{target:{value:unknown}})=>setValues(v=>({...v,[key]:String(e.target.value)}));
   const setSpecies=(value:string)=>{setValues(v=>({...v,species:value,breed:""}));setCustomSpecies("");setCustomBreed("");};
   const setBirthPart=(key:"year"|"month"|"day",raw:string)=>{
     const next={...birth,[key]:numericOnly(raw).slice(0,key==="year"?4:2)};
-    setBirth(next);setAge({years:"",months:""});
+    setBirth(next);
     setValues(v=>({...v,birth_date:jalaliToIso(next.year,next.month,next.day)}));
   };
-  const setAgePart=(key:"years"|"months",raw:string)=>{
-    const clean=numericOnly(raw).slice(0,2),next={...age,[key]:clean};
-    setAge(next);setBirth({year:"",month:"",day:""});
-    const years=Number(next.years||0),months=Number(next.months||0);
-    if(!years&&!months)return setValues(v=>({...v,birth_date:""}));
-    const now=gregorianToJalali(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate());
-    const total=(now[0]*12)+(now[1]-1)-(years*12)-months;
-    const by=Math.floor(total/12),bm=(total%12)+1;
-    setValues(v=>({...v,birth_date:jalaliToIso(String(by),String(bm),"1")}));
-  };
-  const resetForm=()=>{setValues({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});setPhoto(null);setPhotoPreview("");setCustomSpecies("");setCustomBreed("");setBirth({year:"",month:"",day:""});setAge({years:"",months:""});};
+  const resetForm=()=>{setValues({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});setPhoto(null);setPhotoPreview("");setCustomSpecies("");setCustomBreed("");setBirth({year:"",month:"",day:""});};
   const save=async(e:React.FormEvent)=>{
     e.preventDefault();
     const species=values.species===OTHER_OPTION?customSpecies.trim():values.species;
@@ -141,8 +131,7 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
     {isOtherSpecies&&<TextField label="نام گونه" value={customSpecies} onChange={e=>setCustomSpecies(e.target.value)} required helperText="اگر گونه در فهرست نیست، نام فارسی یا انگلیسی آن را وارد کنید."/>}
     <div className="form-row"><FormControl disabled={!values.species}><InputLabel>نژاد</InputLabel><Select label="نژاد" value={values.breed} onChange={set("breed")}>{breedOptions.map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
     {isOtherBreed&&<TextField label="نام نژاد" value={customBreed} onChange={e=>setCustomBreed(e.target.value)} helperText="نام نژاد می‌تواند فارسی یا انگلیسی باشد."/>}
-    <Box className="pet-birth-card"><Typography variant="subtitle2">تاریخ تولد شمسی</Typography><Typography color="text.secondary" variant="caption">سال و ماه کافی است؛ اگر روز وارد نشود، روز یکم ماه ذخیره می‌شود. سن تا امروز خودکار محاسبه می‌شود.</Typography><div className="form-row birth-row"><FormControl><InputLabel>سال</InputLabel><Select label="سال" value={birth.year} onChange={e=>setBirthPart("year",String(e.target.value))}>{jalaliYears.map(y=><MenuItem key={y} value={String(y)}>{faNumber.format(y)}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>ماه</InputLabel><Select label="ماه" value={birth.month} onChange={e=>setBirthPart("month",String(e.target.value))}>{persianMonths.map((m,i)=><MenuItem key={m} value={String(i+1)}>{m}</MenuItem>)}</Select></FormControl><TextField label="روز، اختیاری" value={birth.day} onChange={e=>setBirthPart("day",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div>{calculatedAge&&<div className="calculated-age"><span>سن محاسبه‌شده تا امروز</span><b>{calculatedAge}</b></div>}</Box>
-    <Box className="pet-birth-card subtle"><Typography variant="subtitle2">اگر تاریخ تولد را نمی‌دانید</Typography><Typography color="text.secondary" variant="caption">سن تقریبی را وارد کنید تا تاریخ تولد تقریبی از ماه جاری محاسبه شود.</Typography><div className="form-row"><TextField label="سال" value={age.years} onChange={e=>setAgePart("years",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/><TextField label="ماه" value={age.months} onChange={e=>setAgePart("months",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div></Box>
+    <Box className="pet-birth-card"><Typography variant="subtitle2">تاریخ تولد شمسی</Typography><Typography color="text.secondary" variant="caption">سال و ماه کافی است؛ اگر روز وارد نشود، روز یکم ماه ذخیره می‌شود. سن تا امروز خودکار محاسبه می‌شود.</Typography><div className="form-row birth-row"><FormControl><InputLabel>سال</InputLabel><Select label="سال" value={birth.year} onChange={e=>setBirthPart("year",String(e.target.value))}>{jalaliYears.map(y=><MenuItem key={y} value={String(y)}>{y}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>ماه</InputLabel><Select label="ماه" value={birth.month} onChange={e=>setBirthPart("month",String(e.target.value))}>{persianMonths.map((m,i)=><MenuItem key={m} value={String(i+1)}>{m}</MenuItem>)}</Select></FormControl><TextField label="روز، اختیاری" value={birth.day} onChange={e=>setBirthPart("day",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div><div className="calculated-age"><span>سن محاسبه‌شده تا امروز</span><b>{calculatedAge}</b></div></Box>
     <div className="form-row"><TextField label="وزن فعلی" value={values.current_weight} onChange={e=>setValues(v=>({...v,current_weight:decimalOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"decimal"}}}/><TextField label="شماره میکروچیپ" value={values.microchip_number} onChange={e=>setValues(v=>({...v,microchip_number:numericOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"numeric"}}} helperText="فقط عدد؛ اعداد فارسی خودکار تبدیل می‌شوند."/></div>
   </Stack></DialogContent><DialogActions><Button onClick={onClose}>انصراف</Button><Button variant="contained" type="submit" disabled={busy}>{busy?<CircularProgress size={20}/>:"ساخت پرونده"}</Button></DialogActions></Box></Dialog>;
 }
