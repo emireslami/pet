@@ -89,6 +89,7 @@ function PetProfile({ pet, records, back, onAdd, onRefresh }: { pet: Pet; record
 }
 
 export default function App() {
+  const [modal, modalContext] = Modal.useModal();
   const [page, setPage] = useState("dashboard"), [drawer, setDrawer] = useState(false), [loading, setLoading] = useState(true);
   const [pets, setPets] = useState<Pet[]>([]), [records, setRecords] = useState<MedicalRecord[]>([]), [pet, setPet] = useState<Pet | null>(null);
   const [petModal, setPetModal] = useState(false), [recordModal, setRecordModal] = useState(false);
@@ -96,7 +97,25 @@ export default function App() {
   useEffect(() => { load(); }, [load]);
   const items = useMemo(() => nav.map(([key, label, Icon]) => ({ key, label, icon: <Icon /> })), []);
   const go = (key: string) => { setPage(key); setPet(null); setDrawer(false); };
-  const logout = async () => { await supabase.auth.signOut(); window.location.href = "/app"; };
+  const logout = () => {
+    setDrawer(false);
+    modal.confirm({
+      title: "از حساب خارج می‌شوید؟",
+      content: "برای ورود دوباره باید شماره موبایل و کد ورود را وارد کنید.",
+      okText: "خروج از حساب",
+      cancelText: "انصراف",
+      okButtonProps: { danger: true },
+      centered: true,
+      async onOk() {
+        const { error } = await supabase.auth.signOut({ scope: "local" });
+        if (error) {
+          message.error("خروج از حساب انجام نشد. دوباره تلاش کنید.");
+          throw error;
+        }
+        window.location.replace("/app");
+      },
+    });
+  };
   const currentTitle = pet?.name || nav.find(x => x[0] === page)?.[1] || "داشبورد";
   const content = () => {
     if (loading) return <div className="page-loading"><Spin size="large" /></div>;
@@ -106,6 +125,7 @@ export default function App() {
     return <><SectionHead title={nav.find(x => x[0] === page)?.[1] || ""} /><EmptyPanel title="هنوز اطلاعاتی ثبت نشده" text="این بخش با ثبت اطلاعات واقعی شما تکمیل می‌شود." /></>;
   };
   return <Layout className="app">
+    {modalContext}
     <Sider width={248} className="sider"><div className="brand"><span>V</span><div><b>Vetrica</b><small>Digital Pet Health</small></div></div><Menu mode="inline" selectedKeys={[page]} items={items} onClick={({ key }) => go(key)} /><Button className="logout-button" type="text" icon={<LogoutOutlined />} onClick={logout}>خروج از حساب</Button></Sider>
     <Drawer placement="right" open={drawer} onClose={() => setDrawer(false)} title="Vetrica"><Menu mode="inline" selectedKeys={[page]} items={items} onClick={({ key }) => go(key)} /><Button block icon={<LogoutOutlined />} onClick={logout}>خروج</Button></Drawer>
     <Layout>
