@@ -6,7 +6,7 @@ import { hasSupabase, normalizeIranPhone, supabase } from "./lib/supabase";
 
 const { Title, Text } = Typography;
 
-export default function AuthGate({ children }: { children: React.ReactNode }) {
+export default function AuthGate({ children, forceFresh = false }: { children: React.ReactNode; forceFresh?: boolean }) {
   const [session, setSession] = useState<Session | null>(null);
   const [ready, setReady] = useState(false);
   const [step, setStep] = useState<"phone" | "code">("phone");
@@ -17,10 +17,21 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (!hasSupabase) { setReady(true); return; }
-    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setReady(true); });
+    const prepare = async () => {
+      if (forceFresh) {
+        await supabase.auth.signOut({ scope: "local" });
+        setSession(null);
+        setReady(true);
+        return;
+      }
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setReady(true);
+    };
+    void prepare();
     const { data } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
     return () => data.subscription.unsubscribe();
-  }, []);
+  }, [forceFresh]);
 
   const requestCode = async ({ phone }: { phone: string }) => {
     setBusy(true); setError(""); setNotice("");
@@ -51,6 +62,7 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
       refresh_token: data.session.refresh_token,
     });
     if (result.error) setError(result.error.message);
+    else if (forceFresh) window.location.replace("/app");
     setBusy(false);
   };
 
