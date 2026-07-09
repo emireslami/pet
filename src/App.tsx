@@ -108,12 +108,17 @@ function calculateAgeText(jy:string,jm:string,jd:string) {
   if(!jy)return "با انتخاب سال تولد، سن تا امروز اینجا نمایش داده می‌شود.";
   const birthYear=Number(jy),birthMonth=Number(jm||"1"),birthDay=Number(jd||"1");
   const today=new Date(),[todayYear,todayMonth,todayDay]=gregorianToJalali(today.getFullYear(),today.getMonth()+1,today.getDate());
-  let totalMonths=(todayYear-birthYear)*12+(todayMonth-birthMonth);
-  if(todayDay<birthDay)totalMonths-=1;
-  if(totalMonths<0)return "تاریخ تولد در آینده است.";
-  const years=Math.floor(totalMonths/12),months=totalMonths%12;
-  if(!years&&!months)return "کمتر از یک ماه";
-  return [years?`${faNumber.format(years)} سال`:"",months?`${faNumber.format(months)} ماه`:""].filter(Boolean).join(" و ");
+  let years=todayYear-birthYear,months=todayMonth-birthMonth,days=todayDay-birthDay;
+  if(days<0){
+    const prevMonth=todayMonth===1?12:todayMonth-1;
+    const prevMonthYear=todayMonth===1?todayYear-1:todayYear;
+    days+=jalaliMonthDays(String(prevMonthYear),String(prevMonth));
+    months-=1;
+  }
+  if(months<0){years-=1;months+=12;}
+  if(years<0)return "تاریخ تولد در آینده است.";
+  if(!years&&!months&&!days)return "امروز";
+  return [years?`${faNumber.format(years)} سال`:"",months?`${faNumber.format(months)} ماه`:"",days?`${faNumber.format(days)} روز`:""].filter(Boolean).join(" و ");
 }
 
 function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:()=>void}) {
