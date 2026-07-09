@@ -1,36 +1,17 @@
-import { useState } from "react";
-import { EyeOutlined, FormOutlined } from "@ant-design/icons";
-import { Button, Form, Input, Modal, Radio, message } from "antd";
+import { useEffect, useState } from "react";
+import { EditNoteRounded, VisibilityRounded } from "@mui/icons-material";
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Radio, RadioGroup, Stack, TextField, Typography } from "@mui/material";
 import type { Pet } from "./types";
 import { hasSupabase, normalizeIranPhone, supabase } from "./lib/supabase";
 
-export default function SharePetModal({ pet, open, onClose }: { pet: Pet; open: boolean; onClose: () => void }) {
-  const [busy, setBusy] = useState(false);
-  const [form] = Form.useForm();
-  const submit = async ({ phone, accessLevel }: { phone: string; accessLevel: "view" | "edit" }) => {
-    setBusy(true);
-    if (hasSupabase && /^[0-9a-f-]{36}$/i.test(pet.id)) {
-      const { error } = await supabase.rpc("set_pet_member_access", {
-        target_pet_id: pet.id,
-        target_phone: normalizeIranPhone(phone),
-        access_level: accessLevel,
-      });
-      if (error) { message.error(error.message.includes("No registered") ? "این شماره هنوز در Vetrica ثبت‌نام نکرده است." : "افزودن دسترسی انجام نشد."); setBusy(false); return; }
-    }
-    message.success(`دسترسی به پرونده ${pet.name} اضافه شد.`);
-    setBusy(false); form.resetFields(); onClose();
+export default function SharePetModal({pet,open,onClose}:{pet:Pet;open:boolean;onClose:()=>void}) {
+  const[busy,setBusy]=useState(false),[phone,setPhone]=useState(""),[accessLevel,setAccessLevel]=useState<"view"|"edit">("view"),[error,setError]=useState("");
+  useEffect(()=>{if(open){setPhone("");setAccessLevel("view");setError("");}},[open]);
+  const submit=async(e:React.FormEvent)=>{
+    e.preventDefault();if(!/^(\+98|0)?9\d{9}$/.test(phone.replace(/\s/g,"")))return setError("شماره معتبر وارد کنید.");
+    setBusy(true);setError("");
+    if(hasSupabase&&/^[0-9a-f-]{36}$/i.test(pet.id)){const{error:dbError}=await supabase.rpc("set_pet_member_access",{target_pet_id:pet.id,target_phone:normalizeIranPhone(phone),access_level:accessLevel});if(dbError){setError(dbError.message.includes("No registered")?"این شماره هنوز در Vetrica ثبت‌نام نکرده است.":"افزودن دسترسی انجام نشد.");setBusy(false);return;}}
+    setBusy(false);onClose();
   };
-  return <Modal title={`اشتراک‌گذاری پرونده ${pet.name}`} open={open} onCancel={onClose} footer={null}>
-    <p className="share-note">فقط مالک پرونده می‌تواند دسترسی دیگران را اضافه، محدود یا حذف کند. شماره موردنظر باید قبلاً ثبت‌نام کرده باشد.</p>
-    <Form form={form} layout="vertical" onFinish={submit} initialValues={{ accessLevel: "view" }}>
-      <Form.Item name="phone" label="شماره موبایل عضو خانواده" rules={[{ required: true, pattern: /^(\+98|0)?9\d{9}$/, message: "شماره معتبر وارد کنید" }]}><Input dir="ltr" placeholder="0912 123 4567" /></Form.Item>
-      <Form.Item name="accessLevel" label="سطح دسترسی">
-        <Radio.Group className="access-levels">
-          <Radio value="view"><EyeOutlined /><span><b>فقط مشاهده</b><small>دیدن پرونده و مدارک، بدون امکان تغییر</small></span></Radio>
-          <Radio value="edit"><FormOutlined /><span><b>مشاهده و ثبت اطلاعات</b><small>مشاهده پرونده و افزودن رویداد، سند و هزینه</small></span></Radio>
-        </Radio.Group>
-      </Form.Item>
-      <Button block type="primary" htmlType="submit" loading={busy}>ثبت یا تغییر دسترسی</Button>
-    </Form>
-  </Modal>;
+  return <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm"><Box component="form" onSubmit={submit}><DialogTitle>اشتراک‌گذاری پرونده {pet.name}</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}><Alert severity="info">فقط مالک پرونده می‌تواند دسترسی دیگران را مدیریت کند.</Alert>{error&&<Alert severity="error">{error}</Alert>}<TextField label="شماره موبایل عضو خانواده" placeholder="0912 123 4567" value={phone} onChange={e=>setPhone(e.target.value)} slotProps={{htmlInput:{dir:"ltr"}}}/><RadioGroup value={accessLevel} onChange={e=>setAccessLevel(e.target.value as "view"|"edit")} className="access-levels"><FormControlLabel value="view" control={<Radio/>} label={<span><VisibilityRounded/><b>فقط مشاهده</b><small>دیدن پرونده و مدارک، بدون امکان تغییر</small></span>}/><FormControlLabel value="edit" control={<Radio/>} label={<span><EditNoteRounded/><b>مشاهده و ثبت اطلاعات</b><small>افزودن رویداد، سند و هزینه</small></span>}/></RadioGroup></Stack></DialogContent><DialogActions><Button onClick={onClose}>انصراف</Button><Button variant="contained" type="submit" disabled={busy}>{busy?<CircularProgress size={20}/>:"ثبت یا تغییر دسترسی"}</Button></DialogActions></Box></Dialog>;
 }
