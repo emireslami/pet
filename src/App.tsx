@@ -26,8 +26,25 @@ const nav = [
 function SectionHead({title,eyebrow,action}:{title:string;eyebrow?:string;action?:React.ReactNode}) {
   return <div className="section-head"><div>{eyebrow&&<Typography className="eyebrow" variant="caption">{eyebrow}</Typography>}<Typography variant="h5" component="h2">{title}</Typography></div>{action}</div>;
 }
+const defaultPetAvatarByCode: Record<string,string> = {
+  DOG: "/pets/default-dog.jpg",
+  CAT: "/pets/default-cat.jpg",
+  BIRD: "/pets/default-bird.png",
+  RABBIT: "/pets/default-rabbit.png",
+  OTHER: "/pets/default-other.png",
+};
+const defaultPetAvatar = (species?:string|null,speciesCode?:string|null) => {
+  const code=speciesCode?.toUpperCase();
+  if(code&&defaultPetAvatarByCode[code])return defaultPetAvatarByCode[code];
+  const normalized=(species||"").trim().toLowerCase();
+  if(["گربه","cat"].includes(normalized))return defaultPetAvatarByCode.CAT;
+  if(["پرنده","bird"].includes(normalized))return defaultPetAvatarByCode.BIRD;
+  if(["خرگوش","rabbit"].includes(normalized))return defaultPetAvatarByCode.RABBIT;
+  if(["سگ","dog"].includes(normalized))return defaultPetAvatarByCode.DOG;
+  return defaultPetAvatarByCode.OTHER;
+};
 function PetMark({pet,size=54}:{pet:Pet;size?:number}) {
-  const fallback=pet.species==="گربه"?"/pets/default-cat.jpg":"/pets/default-dog.jpg";
+  const fallback=defaultPetAvatar(pet.species,pet.species_code);
   return <Avatar className="pet-mark" src={pet.photo_url||fallback} alt={pet.name} sx={{width:size,height:size,background:"linear-gradient(145deg,#0071E3,#14B8A6)",fontSize:size*.4}}>{pet.name.slice(0,1)}</Avatar>;
 }
 function EmptyPanel({title,text,action}:{title:string;text:string;action?:React.ReactNode}) {
@@ -165,7 +182,8 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
   const calculatedAge=calculateAgeText(birth.year,birth.month,birth.day);
   const weightNumber=Number(decimalOnly(values.current_weight));
   const weightHelper=values.current_weight&&Number.isFinite(weightNumber)?`(${faNumber.format(Math.round(weightNumber*1000))} گرم)`:"واحد وزن کیلوگرم است.";
-  return <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{paper:{className:"rtl-pet-dialog",sx:{direction:"rtl",textAlign:"right"}}}}><Box component="form" onSubmit={save}><DialogTitle>ساخت پرونده پت</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>{error&&<Alert severity="error">{error}</Alert>}<Box className="pet-photo-picker" component="label">{photoPreview?<img src={photoPreview} alt="پیش‌نمایش عکس پت"/>:<><img src={values.species==="گربه"?"/pets/default-cat.jpg":"/pets/default-dog.jpg"} alt="عکس پیش‌فرض پت"/><span>افزودن عکس پت</span></>}<input hidden type="file" accept="image/*" onChange={e=>{const selected=e.target.files?.[0];if(!selected)return;if(selected.size>5*1024*1024)return setError("حجم عکس باید کمتر از ۵ مگابایت باشد.");setPhoto(selected);setPhotoPreview(URL.createObjectURL(selected));setError("");}}/></Box>
+  const defaultAvatar=defaultPetAvatar(values.species,selectedSpecies?.code);
+  return <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{paper:{className:"rtl-pet-dialog",sx:{direction:"rtl",textAlign:"right"}}}}><Box component="form" onSubmit={save}><DialogTitle>ساخت پرونده پت</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>{error&&<Alert severity="error">{error}</Alert>}<Box className="pet-photo-picker" component="label">{photoPreview?<img src={photoPreview} alt="پیش‌نمایش عکس پت"/>:<><img src={defaultAvatar} alt="عکس پیش‌فرض پت"/><span>افزودن عکس پت</span></>}<input hidden type="file" accept="image/*" onChange={e=>{const selected=e.target.files?.[0];if(!selected)return;if(selected.size>5*1024*1024)return setError("حجم عکس باید کمتر از ۵ مگابایت باشد.");setPhoto(selected);setPhotoPreview(URL.createObjectURL(selected));setError("");}}/></Box>
     <div className="form-row"><TextField label="نام پت" value={values.name} onChange={set("name")} required helperText="فارسی یا انگلیسی قابل قبول است."/><Autocomplete loading={taxonomyLoading} options={speciesOptions} value={selectedSpecies} filterOptions={filterTaxonomyOptions} getOptionLabel={speciesLabel} isOptionEqualToValue={(option,value)=>option.id===value.id} onChange={(_,option)=>setSpeciesOption(option)} renderOption={(props,option)=><li {...props} key={option.id}><span className="option-emoji">{speciesEmoji[option.code]}</span><span className="option-text"><b>{option.name_fa}</b><small>{option.name_en}</small></span></li>} renderInput={params=><TextField {...params} label="گونه" required placeholder="جستجو: سگ یا Dog"/>}/></div>
     {isOtherSpecies&&<TextField label="نام گونه" value={customSpecies} onChange={e=>setCustomSpecies(e.target.value)} required helperText="اگر گونه در فهرست نیست، نام فارسی یا انگلیسی آن را وارد کنید."/>}
     <div className="form-row"><Autocomplete disabled={!values.species_id} options={breedOptions} value={selectedBreed} filterOptions={filterTaxonomyOptions} getOptionLabel={breedLabel} isOptionEqualToValue={(option,value)=>option.id===value.id} groupBy={option=>option.group_fa||"نژادها"} onChange={(_,option)=>setBreedOption(option)} renderOption={(props,option)=><li {...props} key={option.id}><span className="option-text"><b>{option.name_fa}</b><small>{option.name_en}{option.group_en?` · ${option.group_en}`:""}</small></span></li>} renderInput={params=><TextField {...params} label="نژاد" placeholder={values.species_id?"جستجو: Golden یا گلدن":"ابتدا گونه را انتخاب کنید"}/>}/><FormControl><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
