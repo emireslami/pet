@@ -1,9 +1,24 @@
 import { useEffect, useState } from "react";
 import PhoneIphoneRounded from "@mui/icons-material/PhoneIphoneRounded";
 import VerifiedUserRounded from "@mui/icons-material/VerifiedUserRounded";
-import { Alert, Box, Button, CircularProgress, Paper, TextField, Typography } from "@mui/material";
+import { Alert, Box, Button, CircularProgress, InputAdornment, Paper, TextField, Typography } from "@mui/material";
 import type { Session } from "@supabase/supabase-js";
-import { hasSupabase, normalizeIranPhone, supabase } from "./lib/supabase";
+import { hasSupabase, supabase } from "./lib/supabase";
+
+async function functionErrorMessage(error: unknown, fallback: string) {
+  const context = (error as { context?: Response } | null)?.context;
+  if (context) {
+    try {
+      const body = await context.json() as { error?: string };
+      if (body.error) return body.error;
+    } catch { /* use the localized fallback */ }
+  }
+  return fallback;
+}
+
+function iranianDigitsToEnglish(value: string) {
+  return value.replace(/[۰-۹]/g, digit => String("۰۱۲۳۴۵۶۷۸۹".indexOf(digit)));
+}
 
 export default function AuthGate({ children, forceFresh = false }: { children: React.ReactNode; forceFresh?: boolean }) {
   const [session, setSession] = useState<Session | null>(null);
@@ -31,11 +46,11 @@ export default function AuthGate({ children, forceFresh = false }: { children: R
 
   const requestCode = async (event: React.FormEvent) => {
     event.preventDefault(); setError(""); setNotice("");
-    if (!/^(\+98|0)?9\d{9}$/.test(phone.replace(/\s/g, ""))) return setError("شماره موبایل معتبر وارد کنید.");
+    if (!/^9\d{9}$/.test(phone)) return setError("شماره موبایل باید با 9 شروع شود و ۱۰ رقم باشد.");
     setBusy(true);
-    const normalizedPhone = normalizeIranPhone(phone);
+    const normalizedPhone = `+98${phone}`;
     const { data, error: invokeError } = await supabase.functions.invoke("send-login-otp", { body: { phone: normalizedPhone } });
-    setPhone(normalizedPhone); setStep("code");
+    setStep("code");
     setNotice(invokeError || data?.error ? "ارسال پیامک فعلاً در دسترس نیست؛ کد تست 123456 فعال است." : "کد ورود ارسال شد. کد تست 123456 هم فعلاً فعال است.");
     setBusy(false);
   };
@@ -44,9 +59,9 @@ export default function AuthGate({ children, forceFresh = false }: { children: R
     event.preventDefault(); setError(""); setNotice("");
     if (!/^\d{6}$/.test(code)) return setError("کد ۶ رقمی را وارد کنید.");
     setBusy(true);
-    const { data, error: invokeError } = await supabase.functions.invoke("verify-login-otp", { body: { phone, code } });
+    const { data, error: invokeError } = await supabase.functions.invoke("verify-login-otp", { body: { phone: `+98${phone}`, code } });
     if (invokeError || data?.error || !data?.session?.access_token || !data?.session?.refresh_token) {
-      setError(data?.error || invokeError?.message || "کد ورود صحیح نیست."); setBusy(false); return;
+      setError(data?.error || await functionErrorMessage(invokeError, "ورود انجام نشد. لطفاً دوباره تلاش کنید.")); setBusy(false); return;
     }
     const result = await supabase.auth.setSession({ access_token: data.session.access_token, refresh_token: data.session.refresh_token });
     if (result.error) setError(result.error.message); else if (forceFresh) window.location.replace("/app");
@@ -62,10 +77,14 @@ export default function AuthGate({ children, forceFresh = false }: { children: R
       <div><VerifiedUserRounded /><Typography variant="h5" component="h2">ثبت‌نام یا ورود</Typography><Typography color="text.secondary">شماره موبایل خود را وارد کنید؛ اگر حساب نداشته باشید، حساب شما ساخته می‌شود.</Typography></div>
       {notice && <Alert severity="success">{notice}</Alert>}{error && <Alert severity="error">{error}</Alert>}
       {step === "phone" ? <Box component="form" onSubmit={requestCode}>
-        <TextField fullWidth label="شماره موبایل" value={phone} onChange={e=>setPhone(e.target.value)} placeholder="0912 123 4567" slotProps={{htmlInput:{dir:"ltr",inputMode:"tel"},input:{startAdornment:<PhoneIphoneRounded fontSize="small"/>}}} />
+        <TextField fullWidth label="شماره موبایل" value={phone} onChange={e=>{
+          const digits=iranianDigitsToEnglish(e.target.value).replace(/\D/g,"");
+          if (digits && !digits.startsWith("9")) return;
+          setPhone(digits.slice(0,10)); setError("");
+        }} placeholder="9121234567" helperText="شماره موبایل را بدون صفر و با 9 شروع کنید؛ مثال: 9121234567" error={Boolean(error)} slotProps={{htmlInput:{dir:"ltr",inputMode:"numeric",maxLength:10},input:{startAdornment:<InputAdornment position="start"><PhoneIphoneRounded fontSize="small"/><b>+98</b></InputAdornment>}}} />
         <Button fullWidth variant="contained" size="large" type="submit" disabled={busy} sx={{mt:2}}>{busy?<CircularProgress size={22} color="inherit"/>:"ادامه با شماره موبایل"}</Button>
       </Box> : <Box component="form" onSubmit={verifyCode}>
-        <TextField fullWidth label="شماره موبایل" value={phone} disabled slotProps={{htmlInput:{dir:"ltr"}}} />
+        <TextField fullWidth label="شماره موبایل" value={`+98 ${phone}`} disabled slotProps={{htmlInput:{dir:"ltr"}}} />
         <TextField fullWidth label="کد ورود" value={code} onChange={e=>setCode(e.target.value)} placeholder="123456" slotProps={{htmlInput:{dir:"ltr",inputMode:"numeric",maxLength:6}}} sx={{mt:2}} />
         <Button fullWidth variant="contained" size="large" type="submit" disabled={busy} sx={{mt:2}}>{busy?<CircularProgress size={22} color="inherit"/>:"ورود"}</Button>
         <Button fullWidth onClick={()=>{setStep("phone");setNotice("");setError("");}} disabled={busy}>تغییر شماره موبایل</Button>

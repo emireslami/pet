@@ -78,7 +78,19 @@ async function getUserIdByPhone(phone: string) {
     body: JSON.stringify({ target_phone: phone }),
   });
   if (!response.ok) throw new Error(await response.text());
-  return (await response.json()) as string | null;
+  const exactId = (await response.json()) as string | null;
+  if (exactId) return exactId;
+
+  // Supabase projects created at different times may persist the same Iranian
+  // number with or without a leading plus. Compare digits as a safe fallback.
+  const usersResponse = await supabaseAuth("admin/users?page=1&per_page=1000");
+  if (!usersResponse.ok) throw new Error(await usersResponse.text());
+  const payload = await usersResponse.json();
+  const targetDigits = phone.replace(/\D/g, "");
+  const user = payload?.users?.find((item: { phone?: string }) =>
+    String(item.phone || "").replace(/\D/g, "") === targetDigits
+  );
+  return user?.id as string | null;
 }
 
 async function ensureUser(phone: string, password: string) {
