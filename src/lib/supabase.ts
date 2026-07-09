@@ -7,7 +7,13 @@ export const hasSupabase = Boolean(url && key);
 export const supabase = createClient(
   url || "https://placeholder.supabase.co",
   key || "placeholder-key",
-  { auth: { persistSession: true, autoRefreshToken: true } },
+  {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      storageKey: "vetrica-auth-v2",
+    },
+  },
 );
 
 export function normalizeIranPhone(value: string) {

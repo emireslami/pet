@@ -59,12 +59,12 @@ export default function AuthGate({ children }: { children: React.ReactNode }) {
 
   return <main className="auth-page" dir="rtl">
     <section className="auth-brand"><div className="brand-symbol">V</div><span>Vetrica</span><h1>سلامت هر پت، در یک پرونده.</h1><p>زیرساخت دیجیتال سلامت پت‌ها برای نگهداری دقیق، امن و یکپارچه تمام سوابق پزشکی.</p><div className="family-access"><span>مالک</span><i>+</i><span>همراه</span><i>+</i><span>دامپزشک</span><b>یک پرونده سلامت واحد</b></div></section>
-    <section className="auth-card"><div><SafetyCertificateOutlined /><Title level={2}>ورود به Vetrica</Title><Text type="secondary">با شماره موبایل و کد یک‌بارمصرف وارد شوید</Text></div>
+    <section className="auth-card"><div><SafetyCertificateOutlined /><Title level={2}>ثبت‌نام یا ورود</Title><Text type="secondary">شماره موبایل خود را وارد کنید؛ اگر حساب نداشته باشید، حساب شما ساخته می‌شود.</Text></div>
       {notice && <Alert type="success" showIcon message={notice} />}
       {error && <Alert type="error" showIcon message={error} />}
       {step === "phone" ? <Form layout="vertical" onFinish={requestCode} requiredMark={false}>
         <Form.Item name="phone" label="شماره موبایل" rules={[{ required: true, pattern: /^(\+98|0)?9\d{9}$/, message: "شماره موبایل معتبر وارد کنید" }]}><Input size="large" dir="ltr" prefix={<MobileOutlined />} placeholder="0912 123 4567" /></Form.Item>
-        <Button htmlType="submit" type="primary" size="large" block loading={busy}>دریافت کد ورود</Button>
+        <Button htmlType="submit" type="primary" size="large" block loading={busy}>ادامه با شماره موبایل</Button>
       </Form> : <Form layout="vertical" onFinish={verifyCode} requiredMark={false}>
         <Form.Item label="شماره موبایل"><Input size="large" dir="ltr" value={phone} disabled /></Form.Item>
         <Form.Item name="code" label="کد ورود" rules={[{ required: true, pattern: /^\d{6}$/, message: "کد ۶ رقمی را وارد کنید" }]}>
