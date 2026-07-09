@@ -14,14 +14,14 @@ Deno.serve(async (request) => {
       body: JSON.stringify({
         model: "gpt-5.4-mini",
         input: [{ role: "user", content: [
-          { type: "input_text", text: `این مدرک پزشکی حیوانات از نوع ${recordType} است. فقط اطلاعات قابل مشاهده را استخراج کن. حدس نزن. تاریخ و مبالغ را همان‌طور که نوشته شده برگردان.` },
+          { type: "input_text", text: `این مدرک پزشکی حیوانات از نوع ${recordType} است. فقط بخش‌های قابل مشاهده پزشکی را استخراج کن. حدس نزن و تاریخ را همان‌طور که نوشته شده برگردان.` },
           { type: "input_image", image_url: image, detail: "high" },
         ]}],
         text: { format: { type: "json_schema", name: "pet_medical_record", strict: true, schema: {
           type: "object", additionalProperties: false,
           properties: {
-            recordType:{type:"string"}, title:{type:"string"}, date:{type:"string"}, clinic:{type:"string"}, veterinarian:{type:"string"}, diagnosis:{type:"string"}, medications:{type:"string"}, amount:{type:"string"}, notes:{type:"string"}, confidence:{type:"number"}
-          }, required:["recordType","title","date","clinic","veterinarian","diagnosis","medications","amount","notes","confidence"]
+            recordType:{type:"string"}, title:{type:"string"}, date:{type:"string"}, clinic:{type:"string"}, veterinarian:{type:"string"}, diagnosis:{type:"string"}, medications:{type:"string"}, notes:{type:"string"}, confidence:{type:"number"}
+          }, required:["recordType","title","date","clinic","veterinarian","diagnosis","medications","notes","confidence"]
         }}}
       }),
     });

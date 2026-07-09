@@ -12,7 +12,7 @@ import { Button, Chip } from "@mui/material";
 
 const features = [
   { icon: <FileTextOutlined />, title: "پرونده پزشکی یکپارچه", text: "ویزیت‌ها، آزمایش‌ها، واکسن‌ها، داروها و اسناد همیشه مرتب و در دسترس‌اند." },
-  { icon: <CameraOutlined />, title: "ثبت هوشمند با تصویر", text: "از نسخه، فاکتور یا نتیجه آزمایش عکس بگیرید؛ اطلاعات به فرم قابل بازبینی تبدیل می‌شود." },
+  { icon: <CameraOutlined />, title: "ثبت هوشمند با تصویر", text: "از نسخه، گزارش درمان یا نتیجه آزمایش عکس بگیرید؛ اطلاعات به فرم قابل بازبینی تبدیل می‌شود." },
   { icon: <TeamOutlined />, title: "پرونده سلامت مشترک", text: "مالک پرونده می‌تواند دسترسی مشاهده یا ثبت اطلاعات را برای اعضای خانواده و دامپزشک مدیریت کند." },
 ];
 
@@ -46,7 +46,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      <section className="trust-strip"><span>تاریخچه درمان، همیشه در دسترس</span><div>{["واکسن‌ها","داروها","آزمایش‌ها","هزینه‌ها","اسناد پزشکی"].map(x=><b key={x}><CheckCircleFilled /> {x}</b>)}</div></section>
+      <section className="trust-strip"><span>تاریخچه درمان، همیشه در دسترس</span><div>{["واکسن‌ها","داروها","آزمایش‌ها","اسناد پزشکی","یادآوری‌ها"].map(x=><b key={x}><CheckCircleFilled /> {x}</b>)}</div></section>
 
       <section className="pet-story">
         <div className="pet-story-images"><img className="story-dog" src="/pets/default-dog.jpg" alt="پرونده سلامت سگ"/><img className="story-cat" src="/pets/default-cat.jpg" alt="پرونده سلامت گربه"/><div className="story-badge"><FileTextOutlined/><b>هیچ سابقه‌ای گم نمی‌شود</b></div></div>
@@ -59,7 +59,7 @@ export default function LandingPage() {
       </section>
 
       <section className="how-section" id="how">
-        <div className="how-card"><div><small>ساده و سریع</small><h2>از مدرک پزشکی تا پرونده مرتب، در چند لحظه</h2><p>اطلاعات را دستی وارد کنید یا تصویر مدرک را اضافه کنید. شما همیشه پیش از ذخیره، اطلاعات استخراج‌شده را بررسی و تأیید می‌کنید.</p><ol><li><b>۱</b><span><strong>تصویر را اضافه کنید</strong><small>نسخه، فاکتور، آزمایش یا کارت واکسن</small></span></li><li><b>۲</b><span><strong>فرم را بازبینی کنید</strong><small>اطلاعات خوانده‌شده قابل ویرایش است</small></span></li><li><b>۳</b><span><strong>در پرونده ذخیره کنید</strong><small>تصویر اصلی هم پیوست باقی می‌ماند</small></span></li></ol></div><div className="document-demo"><div className="paper"><span>کلینیک دامپزشکی</span><i/><i/><i/><i/></div><div className="scan-line"/><div className="parsed-card"><CheckCircleFilled/><b>اطلاعات آماده بازبینی است</b><span>نوع: نسخه پزشکی</span><span>۳ دارو شناسایی شد</span></div></div></div>
+        <div className="how-card"><div><small>ساده و سریع</small><h2>از مدرک پزشکی تا پرونده مرتب، در چند لحظه</h2><p>اطلاعات را دستی وارد کنید یا تصویر مدرک را اضافه کنید. شما همیشه پیش از ذخیره، اطلاعات استخراج‌شده را بررسی و تأیید می‌کنید.</p><ol><li><b>۱</b><span><strong>تصویر را اضافه کنید</strong><small>نسخه، گزارش درمان، آزمایش یا کارت واکسن</small></span></li><li><b>۲</b><span><strong>فرم را بازبینی کنید</strong><small>اطلاعات خوانده‌شده قابل ویرایش است</small></span></li><li><b>۳</b><span><strong>در پرونده ذخیره کنید</strong><small>تصویر اصلی هم پیوست باقی می‌ماند</small></span></li></ol></div><div className="document-demo"><div className="paper"><span>کلینیک دامپزشکی</span><i/><i/><i/><i/></div><div className="scan-line"/><div className="parsed-card"><CheckCircleFilled/><b>اطلاعات آماده بازبینی است</b><span>نوع: نسخه پزشکی</span><span>۳ دارو شناسایی شد</span></div></div></div>
       </section>
 
       <section className="security-section" id="security"><div><SafetyCertificateOutlined /><span><small>کنترل در اختیار شماست</small><h2>پرونده خصوصی، دسترسی شفاف</h2></span></div><p>مالک هر پت تعیین می‌کند چه کسی فقط پرونده را ببیند و چه کسی امکان مشاهده و ثبت اطلاعات داشته باشد.</p><a href="/login"><Button variant="contained" size="large" endIcon={<ArrowLeftOutlined />}>ساخت پرونده</Button></a></section>

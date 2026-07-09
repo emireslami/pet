@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
-  AddRounded, AppsRounded, CalendarMonthRounded, CheckCircleRounded, CreditCardRounded,
+  AddRounded, AppsRounded, CalendarMonthRounded, CheckCircleRounded,
   DescriptionRounded, FavoriteRounded, GroupsRounded, HomeRounded, LogoutRounded,
   MedicationRounded, MenuRounded, NotificationsNoneRounded, PersonRounded, ScienceRounded,
   SearchRounded, SettingsRounded, SupportAgentRounded, TimelineRounded,
@@ -21,7 +21,7 @@ const nav = [
   ["dashboard","داشبورد",HomeRounded],["pets","پت‌ها",GroupsRounded],["timeline","تایم‌لاین پزشکی",TimelineRounded],
   ["vaccines","واکسن‌ها",CheckCircleRounded],["medications","داروها",MedicationRounded],["labs","آزمایش‌ها",ScienceRounded],
   ["documents","اسناد",DescriptionRounded],["reminders","یادآوری‌ها",NotificationsNoneRounded],
-  ["costs","هزینه‌ها",CreditCardRounded],["settings","تنظیمات",SettingsRounded],
+  ["settings","تنظیمات",SettingsRounded],
 ] as const;
 
 function SectionHead({title,eyebrow,action}:{title:string;eyebrow?:string;action?:React.ReactNode}) {
@@ -175,10 +175,10 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
 }
 
 function RecordTable({records,pets}:{records:MedicalRecord[];pets:Pet[]}) {
-  return <TableContainer component={Paper} variant="outlined"><Table size="small"><TableHead><TableRow>{["تاریخ","پت","نوع","عنوان","کلینیک","مبلغ"].map(x=><TableCell key={x}>{x}</TableCell>)}</TableRow></TableHead><TableBody>{records.map(r=><TableRow key={r.id}><TableCell>{r.event_date||"—"}</TableCell><TableCell>{pets.find(p=>p.id===r.pet_id)?.name||"—"}</TableCell><TableCell><Chip size="small" label={r.record_type}/></TableCell><TableCell>{r.title||"—"}</TableCell><TableCell>{r.clinic||"—"}</TableCell><TableCell>{r.amount||"—"}</TableCell></TableRow>)}</TableBody></Table></TableContainer>;
+  return <TableContainer component={Paper} variant="outlined"><Table size="small"><TableHead><TableRow>{["تاریخ","پت","نوع","عنوان","کلینیک"].map(x=><TableCell key={x}>{x}</TableCell>)}</TableRow></TableHead><TableBody>{records.map(r=><TableRow key={r.id}><TableCell>{r.event_date||"—"}</TableCell><TableCell>{pets.find(p=>p.id===r.pet_id)?.name||"—"}</TableCell><TableCell><Chip size="small" label={r.record_type}/></TableCell><TableCell>{r.title||"—"}</TableCell><TableCell>{r.clinic||"—"}</TableCell></TableRow>)}</TableBody></Table></TableContainer>;
 }
 function Dashboard({pets,records,onAddPet,onAddRecord,onOpen}:{pets:Pet[];records:MedicalRecord[];onAddPet:()=>void;onAddRecord:()=>void;onOpen:(p:Pet)=>void}) {
-  const stats=[[pets.length,"تعداد پت‌ها",FavoriteRounded],[records.length,"رویدادهای پزشکی",DescriptionRounded],[0,"یادآوری‌های باز",NotificationsNoneRounded],[0,"هزینه ثبت‌شده",CreditCardRounded]] as const;
+  const stats=[[pets.length,"تعداد پت‌ها",FavoriteRounded],[records.length,"رویدادهای پزشکی",DescriptionRounded],[0,"یادآوری‌های باز",NotificationsNoneRounded],[pets.filter(p=>p.microchip_number).length,"میکروچیپ ثبت‌شده",CheckCircleRounded]] as const;
   return <><SectionHead eyebrow="پرونده سلامت پت‌ها" title="داشبورد" action={<Button variant="contained" startIcon={<AddRounded/>} onClick={pets.length?onAddRecord:onAddPet}>{pets.length?"ثبت اطلاعات پزشکی":"ساخت اولین پرونده"}</Button>}/>{pets.length>0&&<button className="quick-entry-launch" onClick={onAddRecord}><span><AddRounded/></span><div><b>ثبت اطلاعات جدید</b><small>یک عکس بگیرید؛ اطلاعات پرونده خودکار تکمیل می‌شود</small></div><i>←</i></button>}<div className="stats">{stats.map(([value,label,Icon])=><Card key={label}><CardContent><Icon color="primary"/><Typography color="text.secondary" variant="caption">{label}</Typography><Typography variant="h5">{value}</Typography></CardContent></Card>)}</div>
   {!pets.length?<EmptyPanel title="هنوز پرونده‌ای ندارید" text="برای شروع، پرونده اولین پت خود را بسازید." action={<Button variant="contained" startIcon={<AddRounded/>} onClick={onAddPet}>ساخت پرونده پت</Button>}/>:<><SectionHead title="پرونده‌های من" action={<Button startIcon={<AddRounded/>} onClick={onAddPet}>افزودن پت</Button>}/><div className="pet-grid">{pets.map(p=><Card key={p.id} className="pet-card visual-pet-card" onClick={()=>onOpen(p)}><div className="pet-card-photo"><PetMark pet={p} size={220}/><Chip className="pet-status" color="success" size="small" label="پرونده فعال"/></div><CardContent><div className="pet-card-head"><div><Typography variant="h5">{p.name}</Typography><Typography color="text.secondary">{[p.species,p.breed].filter(Boolean).join(" · ")}</Typography></div></div><div className="pet-card-data"><div><small>جنسیت</small><b>{p.gender||"ثبت نشده"}</b></div><div><small>وزن فعلی</small><b>{p.current_weight?`${p.current_weight} کیلوگرم`:"ثبت نشده"}</b></div></div></CardContent></Card>)}</div></>}
   <SectionHead title="آخرین فعالیت‌ها"/>{!records.length?<EmptyPanel title="هنوز رویدادی ثبت نشده" text="ویزیت، نسخه، آزمایش یا هر مدرک پزشکی را با تصویر ثبت کنید." action={pets.length?<Button onClick={onAddRecord}>ثبت اولین رویداد</Button>:undefined}/>:<RecordTable records={records} pets={pets}/>}</>;
