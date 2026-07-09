@@ -29,6 +29,7 @@ export default function AuthGate({ children, forceFresh = false }: { children: R
       setReady(true);
     };
     void prepare();
+    if (forceFresh) return;
     const { data } = supabase.auth.onAuthStateChange((_event, next) => setSession(next));
     return () => data.subscription.unsubscribe();
   }, [forceFresh]);
@@ -67,7 +68,7 @@ export default function AuthGate({ children, forceFresh = false }: { children: R
   };
 
   if (!ready) return <div className="auth-loading">در حال آماده‌سازی…</div>;
-  if (!hasSupabase || session) return <>{children}</>;
+  if (!hasSupabase || (!forceFresh && session)) return <>{children}</>;
 
   return <main className="auth-page" dir="rtl">
     <section className="auth-brand"><div className="brand-symbol">V</div><span>Vetrica</span><h1>سلامت هر پت، در یک پرونده.</h1><p>زیرساخت دیجیتال سلامت پت‌ها برای نگهداری دقیق، امن و یکپارچه تمام سوابق پزشکی.</p><div className="family-access"><span>مالک</span><i>+</i><span>همراه</span><i>+</i><span>دامپزشک</span><b>یک پرونده سلامت واحد</b></div></section>
