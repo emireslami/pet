@@ -96,6 +96,7 @@ export default function App() {
   const items = useMemo(() => nav.map(([key, label, Icon]) => ({ key, label, icon: <Icon /> })), []);
   const go = (key: string) => { setPage(key); setPet(null); setDrawer(false); };
   const logout = async () => { await supabase.auth.signOut(); window.location.href = "/app"; };
+  const currentTitle = pet?.name || nav.find(x => x[0] === page)?.[1] || "داشبورد";
   const content = () => {
     if (loading) return <div className="page-loading"><Spin size="large" /></div>;
     if (pet) return <PetProfile pet={pet} records={records} back={() => setPet(null)} onAdd={() => setRecordModal(true)} onRefresh={load} />;
@@ -103,5 +104,24 @@ export default function App() {
     if (page === "timeline") return <><SectionHead title="تایم‌لاین پزشکی" action={<Button type="primary" disabled={!pets.length} onClick={() => setRecordModal(true)}>ثبت رویداد</Button>} />{records.length ? <RecordTable records={records} pets={pets} /> : <EmptyPanel title="تایم‌لاین خالی است" text="هیچ رویداد پزشکی ثبت نشده است." />}</>;
     return <><SectionHead title={nav.find(x => x[0] === page)?.[1] || ""} /><EmptyPanel title="هنوز اطلاعاتی ثبت نشده" text="این بخش با ثبت اطلاعات واقعی شما تکمیل می‌شود." /></>;
   };
-  return <Layout className="app"><Sider width={248} className="sider"><div className="brand"><span>V</span><div><b>Vetrica</b><small>Digital Pet Health</small></div></div><Menu mode="inline" selectedKeys={[page]} items={items} onClick={({ key }) => go(key)} /><Button className="logout-button" type="text" icon={<LogoutOutlined />} onClick={logout}>خروج از حساب</Button></Sider><Drawer placement="right" open={drawer} onClose={() => setDrawer(false)} title="Vetrica"><Menu mode="inline" selectedKeys={[page]} items={items} onClick={({ key }) => go(key)} /><Button block icon={<LogoutOutlined />} onClick={logout}>خروج</Button></Drawer><Layout><header className="header"><Button className="mobile-menu" type="text" icon={<MenuOutlined />} onClick={() => setDrawer(true)} /><div className="desktop-title"><Text type="secondary">فضای کاری</Text><b>مدیریت سلامت پت‌ها</b></div><div className="header-actions"><Button shape="circle" icon={<SearchOutlined />} /><Badge><Button shape="circle" icon={<BellOutlined />} /></Badge><div className="avatar"><UserOutlined /></div></div></header><Content className="content">{content()}</Content></Layout><PetForm open={petModal} onClose={() => setPetModal(false)} onSaved={load} /><SmartEntryModal open={recordModal} onClose={() => setRecordModal(false)} onSaved={load} pets={pets} /></Layout>;
+  return <Layout className="app">
+    <Sider width={248} className="sider"><div className="brand"><span>V</span><div><b>Vetrica</b><small>Digital Pet Health</small></div></div><Menu mode="inline" selectedKeys={[page]} items={items} onClick={({ key }) => go(key)} /><Button className="logout-button" type="text" icon={<LogoutOutlined />} onClick={logout}>خروج از حساب</Button></Sider>
+    <Drawer placement="right" open={drawer} onClose={() => setDrawer(false)} title="Vetrica"><Menu mode="inline" selectedKeys={[page]} items={items} onClick={({ key }) => go(key)} /><Button block icon={<LogoutOutlined />} onClick={logout}>خروج</Button></Drawer>
+    <Layout>
+      <header className="header">
+        <div className="mobile-app-title"><span>V</span><div><small>Vetrica</small><b>{currentTitle}</b></div></div>
+        <div className="desktop-title"><Text type="secondary">فضای کاری</Text><b>مدیریت سلامت پت‌ها</b></div>
+        <div className="header-actions"><Button className="header-search" shape="circle" icon={<SearchOutlined />} /><Badge><Button shape="circle" icon={<BellOutlined />} /></Badge><div className="avatar"><UserOutlined /></div></div>
+      </header>
+      <Content className="content">{content()}</Content>
+    </Layout>
+    <nav className="bottom-nav" aria-label="ناوبری اصلی">
+      <button className={page === "dashboard" && !pet ? "active" : ""} onClick={() => go("dashboard")}><HomeOutlined /><span>خانه</span></button>
+      <button className={page === "pets" || !!pet ? "active" : ""} onClick={() => go("pets")}><HeartOutlined /><span>پت‌ها</span></button>
+      <button className="mobile-add" onClick={() => pets.length ? setRecordModal(true) : setPetModal(true)}><PlusOutlined /><span>ثبت</span></button>
+      <button className={page === "timeline" ? "active" : ""} onClick={() => go("timeline")}><CalendarOutlined /><span>سوابق</span></button>
+      <button onClick={() => setDrawer(true)}><MenuOutlined /><span>بیشتر</span></button>
+    </nav>
+    <PetForm open={petModal} onClose={() => setPetModal(false)} onSaved={load} /><SmartEntryModal open={recordModal} onClose={() => setRecordModal(false)} onSaved={load} pets={pets} />
+  </Layout>;
 }
