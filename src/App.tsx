@@ -36,42 +36,22 @@ function EmptyPanel({title,text,action}:{title:string;text:string;action?:React.
 }
 
 const OTHER_OPTION = "سایر";
-type PetOption = { fa:string; en:string; emoji?:string; value?:string };
-const optionValue = (option:PetOption) => option.value || option.fa;
-const optionLabel = (option:PetOption) => `${option.emoji ? `${option.emoji} ` : ""}${option.fa} / ${option.en}`;
-const searchText = (option:PetOption) => `${option.fa} ${option.en} ${option.value || ""} ${option.emoji || ""}`.toLowerCase();
-const filterPetOptions = (options:PetOption[],state:{inputValue:string}) => {
+type TaxonomySpecies = { id:string; code:"DOG"|"CAT"|"RABBIT"|"BIRD"|"OTHER"; name_fa:string; name_en:string; is_custom_allowed:boolean };
+type TaxonomyBreed = { id:string; species_id:string; code:string; name_fa:string; name_en:string; group_fa?:string|null; group_en?:string|null };
+const speciesEmoji: Record<string,string> = { DOG:"🐶", CAT:"🐱", BIRD:"🐦", RABBIT:"🐰", OTHER:"✨" };
+const speciesLabel = (option:TaxonomySpecies) => `${speciesEmoji[option.code] || "•"} ${option.name_fa} / ${option.name_en}`;
+const breedLabel = (option:TaxonomyBreed) => `${option.name_fa} / ${option.name_en}`;
+const taxonomySearchText = (option:TaxonomySpecies|TaxonomyBreed) => [
+  "code" in option ? option.code : "",
+  option.name_fa,
+  option.name_en,
+  "group_fa" in option ? option.group_fa || "" : "",
+  "group_en" in option ? option.group_en || "" : "",
+].join(" ").toLowerCase();
+const filterTaxonomyOptions = <T extends TaxonomySpecies|TaxonomyBreed>(options:T[],state:{inputValue:string}) => {
   const query=toEnglishDigits(state.inputValue).trim().toLowerCase();
   if(!query)return options;
-  return options.filter(option=>searchText(option).includes(query));
-};
-const speciesOptions: PetOption[] = [
-  {fa:"سگ",en:"Dog",emoji:"🐶"},
-  {fa:"گربه",en:"Cat",emoji:"🐱"},
-  {fa:"پرنده",en:"Bird",emoji:"🐦"},
-  {fa:"خرگوش",en:"Rabbit",emoji:"🐰"},
-  {fa:OTHER_OPTION,en:"Other",emoji:"✨"},
-];
-const breedLibrary: Record<string,PetOption[]> = {
-  سگ: [
-    {fa:"گلدن رتریور",en:"Golden Retriever"},{fa:"لابرادور رتریور",en:"Labrador Retriever"},{fa:"ژرمن شپرد",en:"German Shepherd"},
-    {fa:"هاسکی",en:"Husky"},{fa:"پودل",en:"Poodle"},{fa:"شیتزو",en:"Shih Tzu"},{fa:"پاگ",en:"Pug"},
-    {fa:"بولداگ فرانسوی",en:"French Bulldog"},{fa:"بیگل",en:"Beagle"},{fa:"مالتیز",en:"Maltese"},{fa:OTHER_OPTION,en:"Other"},
-  ],
-  گربه: [
-    {fa:"پرشین",en:"Persian"},{fa:"اسکاتیش فولد",en:"Scottish Fold"},{fa:"بریتیش شورت‌هیر",en:"British Shorthair"},
-    {fa:"سیامی",en:"Siamese"},{fa:"مین کون",en:"Maine Coon"},{fa:"راگدال",en:"Ragdoll"},{fa:"اسفینکس",en:"Sphynx"},
-    {fa:"دی‌اس‌اچ / خیابانی",en:"Domestic Shorthair / Street Cat"},{fa:OTHER_OPTION,en:"Other"},
-  ],
-  پرنده: [
-    {fa:"عروس هلندی",en:"Cockatiel"},{fa:"مرغ عشق",en:"Budgerigar / Budgie"},{fa:"کاسکو",en:"African Grey Parrot"},
-    {fa:"قناری",en:"Canary"},{fa:"طوطی برزیلی",en:"Lovebird"},{fa:"فنچ",en:"Finch"},{fa:OTHER_OPTION,en:"Other"},
-  ],
-  خرگوش: [
-    {fa:"لوپ هلندی",en:"Holland Lop"},{fa:"مینی لوپ",en:"Mini Lop"},{fa:"نژاد هلندی",en:"Dutch Rabbit"},
-    {fa:"لاین‌هد",en:"Lionhead"},{fa:"آنگورا",en:"Angora"},{fa:"رکس",en:"Rex"},{fa:OTHER_OPTION,en:"Other"},
-  ],
-  [OTHER_OPTION]: [{fa:OTHER_OPTION,en:"Other"}],
+  return options.filter(option=>taxonomySearchText(option).includes(query));
 };
 const persianMonths = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
 const toEnglishDigits = (value:string) => value
@@ -137,12 +117,19 @@ function calculateAgeText(jy:string,jm:string,jd:string) {
 }
 
 function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:()=>void}) {
-  const [values,setValues]=useState({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});
+  const [values,setValues]=useState({name:"",species:"",species_id:"",breed:"",breed_id:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});
   const [busy,setBusy]=useState(false),[error,setError]=useState(""),[photo,setPhoto]=useState<File|null>(null),[photoPreview,setPhotoPreview]=useState("");
   const [customSpecies,setCustomSpecies]=useState(""),[customBreed,setCustomBreed]=useState("");
+  const [speciesOptions,setSpeciesOptions]=useState<TaxonomySpecies[]>([]),[breedOptions,setBreedOptions]=useState<TaxonomyBreed[]>([]);
+  const [taxonomyLoading,setTaxonomyLoading]=useState(false);
   const [birth,setBirth]=useState({year:"",month:"",day:""});
   const set=(key:string)=>(e:{target:{value:unknown}})=>setValues(v=>({...v,[key]:String(e.target.value)}));
-  const setSpecies=(value:string)=>{setValues(v=>({...v,species:value,breed:""}));setCustomSpecies("");setCustomBreed("");};
+  const selectedSpecies=speciesOptions.find(option=>option.id===values.species_id)||null;
+  const selectedBreed=breedOptions.find(option=>option.id===values.breed_id)||null;
+  const setSpeciesOption=(option:TaxonomySpecies|null)=>{setValues(v=>({...v,species:option?.name_fa||"",species_id:option?.id||"",breed:"",breed_id:""}));setCustomSpecies("");setCustomBreed("");setBreedOptions([]);};
+  const setBreedOption=(option:TaxonomyBreed|null)=>{setValues(v=>({...v,breed:option?.name_fa||"",breed_id:option?.id||""}));setCustomBreed("");};
+  useEffect(()=>{if(!open||!hasSupabase)return;let active=true;setTaxonomyLoading(true);supabase.from("species").select("id,code,name_fa,name_en,is_custom_allowed").eq("is_active",true).order("code").then(({data,error})=>{if(!active)return;if(error)setError("دریافت فهرست گونه‌ها انجام نشد.");else setSpeciesOptions((data||[]) as TaxonomySpecies[]);setTaxonomyLoading(false);});return()=>{active=false};},[open]);
+  useEffect(()=>{if(!open||!values.species_id||!hasSupabase){setBreedOptions([]);return;}let active=true;supabase.from("breeds").select("id,species_id,code,name_fa,name_en,group_fa,group_en").eq("species_id",values.species_id).eq("is_active",true).order("group_en").order("name_en").then(({data,error})=>{if(!active)return;if(error)setError("دریافت فهرست نژادها انجام نشد.");else setBreedOptions((data||[]) as TaxonomyBreed[]);});return()=>{active=false};},[open,values.species_id]);
   const setBirthPart=(key:"year"|"month"|"day",raw:string)=>{
     const clean=numericOnly(raw).slice(0,key==="year"?4:2);
     const next={...birth,[key]:clean};
@@ -153,28 +140,29 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
     setBirth(next);
     setValues(v=>({...v,birth_date:jalaliToIso(next.year,next.month,next.day)}));
   };
-  const resetForm=()=>{setValues({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});setPhoto(null);setPhotoPreview("");setCustomSpecies("");setCustomBreed("");setBirth({year:"",month:"",day:""});};
+  const resetForm=()=>{setValues({name:"",species:"",species_id:"",breed:"",breed_id:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});setPhoto(null);setPhotoPreview("");setCustomSpecies("");setCustomBreed("");setBirth({year:"",month:"",day:""});setBreedOptions([]);};
   const save=async(e:React.FormEvent)=>{
     e.preventDefault();
-    const species=values.species===OTHER_OPTION?customSpecies.trim():values.species;
-    const breed=values.breed===OTHER_OPTION?customBreed.trim():values.breed;
+    const isOtherSpecies=selectedSpecies?.is_custom_allowed||selectedSpecies?.code==="OTHER";
+    const isOtherBreed=selectedBreed?.name_en==="Other"||selectedBreed?.name_fa===OTHER_OPTION;
+    const species=isOtherSpecies?customSpecies.trim():selectedSpecies?.name_fa||values.species;
+    const breed=isOtherBreed?customBreed.trim():selectedBreed?.name_fa||values.breed;
     if(!values.name.trim()||!species)return setError("نام و گونه پت را وارد کنید.");
+    if(isOtherBreed&&!breed)return setError("نام نژاد را وارد کنید یا گزینه نامشخص را انتخاب کنید.");
     setBusy(true);setError("");
-    const payload={...values,name:values.name.trim(),species,breed:breed||null,current_weight:values.current_weight?Number(decimalOnly(values.current_weight)):null,microchip_number:numericOnly(values.microchip_number)||null};
+    const payload={...values,name:values.name.trim(),species,breed:breed||null,species_id:values.species_id||null,breed_id:isOtherBreed?null:values.breed_id||null,custom_species:isOtherSpecies?species:null,custom_breed:isOtherBreed?breed:null,current_weight:values.current_weight?Number(decimalOnly(values.current_weight)):null,microchip_number:numericOnly(values.microchip_number)||null};
     const{data:createResult,error:createError}=await supabase.functions.invoke("create-pet",{body:payload});
     const created=createResult?.pet as {id?:string}|undefined;
     if(createError||createResult?.error||!created?.id){setBusy(false);return setError(createResult?.error||"ذخیره پرونده انجام نشد.");}
     if(photo&&created?.id){const upload=await supabase.storage.from("pet-documents").upload(`${created.id}/avatar`,photo,{contentType:photo.type,upsert:true});if(upload.error)setError("پرونده ساخته شد، اما بارگذاری عکس انجام نشد.");}
     setBusy(false);resetForm();onClose();onSaved();
   };
-  const breedOptions=breedLibrary[values.species]||breedLibrary[OTHER_OPTION],isOtherSpecies=values.species===OTHER_OPTION,isOtherBreed=values.breed===OTHER_OPTION;
-  const selectedSpecies=speciesOptions.find(option=>optionValue(option)===values.species)||null;
-  const selectedBreed=breedOptions.find(option=>optionValue(option)===values.breed)||null;
+  const isOtherSpecies=selectedSpecies?.is_custom_allowed||selectedSpecies?.code==="OTHER",isOtherBreed=selectedBreed?.name_en==="Other"||selectedBreed?.name_fa===OTHER_OPTION;
   const calculatedAge=calculateAgeText(birth.year,birth.month,birth.day);
   return <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{paper:{className:"rtl-pet-dialog",sx:{direction:"rtl",textAlign:"right"}}}}><Box component="form" onSubmit={save}><DialogTitle>ساخت پرونده پت</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>{error&&<Alert severity="error">{error}</Alert>}<Box className="pet-photo-picker" component="label">{photoPreview?<img src={photoPreview} alt="پیش‌نمایش عکس پت"/>:<><img src={values.species==="گربه"?"/pets/default-cat.jpg":"/pets/default-dog.jpg"} alt="عکس پیش‌فرض پت"/><span>افزودن عکس پت</span></>}<input hidden type="file" accept="image/*" onChange={e=>{const selected=e.target.files?.[0];if(!selected)return;if(selected.size>5*1024*1024)return setError("حجم عکس باید کمتر از ۵ مگابایت باشد.");setPhoto(selected);setPhotoPreview(URL.createObjectURL(selected));setError("");}}/></Box>
-    <div className="form-row"><TextField label="نام پت" value={values.name} onChange={set("name")} required helperText="فارسی یا انگلیسی قابل قبول است."/><Autocomplete options={speciesOptions} value={selectedSpecies} filterOptions={filterPetOptions} getOptionLabel={optionLabel} isOptionEqualToValue={(option,value)=>optionValue(option)===optionValue(value)} onChange={(_,option)=>setSpecies(option?optionValue(option):"")} renderOption={(props,option)=><li {...props} key={optionValue(option)}><span className="option-emoji">{option.emoji}</span><span className="option-text"><b>{option.fa}</b><small>{option.en}</small></span></li>} renderInput={params=><TextField {...params} label="گونه" required placeholder="جستجو: سگ یا Dog"/>}/></div>
+    <div className="form-row"><TextField label="نام پت" value={values.name} onChange={set("name")} required helperText="فارسی یا انگلیسی قابل قبول است."/><Autocomplete loading={taxonomyLoading} options={speciesOptions} value={selectedSpecies} filterOptions={filterTaxonomyOptions} getOptionLabel={speciesLabel} isOptionEqualToValue={(option,value)=>option.id===value.id} onChange={(_,option)=>setSpeciesOption(option)} renderOption={(props,option)=><li {...props} key={option.id}><span className="option-emoji">{speciesEmoji[option.code]}</span><span className="option-text"><b>{option.name_fa}</b><small>{option.name_en}</small></span></li>} renderInput={params=><TextField {...params} label="گونه" required placeholder="جستجو: سگ یا Dog"/>}/></div>
     {isOtherSpecies&&<TextField label="نام گونه" value={customSpecies} onChange={e=>setCustomSpecies(e.target.value)} required helperText="اگر گونه در فهرست نیست، نام فارسی یا انگلیسی آن را وارد کنید."/>}
-    <div className="form-row"><Autocomplete disabled={!values.species} options={breedOptions} value={selectedBreed} filterOptions={filterPetOptions} getOptionLabel={optionLabel} isOptionEqualToValue={(option,value)=>optionValue(option)===optionValue(value)} onChange={(_,option)=>setValues(v=>({...v,breed:option?optionValue(option):""}))} renderOption={(props,option)=><li {...props} key={optionValue(option)}><span className="option-text"><b>{option.fa}</b><small>{option.en}</small></span></li>} renderInput={params=><TextField {...params} label="نژاد" placeholder={values.species?"جستجو: Golden یا گلدن":"ابتدا گونه را انتخاب کنید"}/>}/><FormControl><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
+    <div className="form-row"><Autocomplete disabled={!values.species_id} options={breedOptions} value={selectedBreed} filterOptions={filterTaxonomyOptions} getOptionLabel={breedLabel} isOptionEqualToValue={(option,value)=>option.id===value.id} groupBy={option=>option.group_fa||"نژادها"} onChange={(_,option)=>setBreedOption(option)} renderOption={(props,option)=><li {...props} key={option.id}><span className="option-text"><b>{option.name_fa}</b><small>{option.name_en}{option.group_en?` · ${option.group_en}`:""}</small></span></li>} renderInput={params=><TextField {...params} label="نژاد" placeholder={values.species_id?"جستجو: Golden یا گلدن":"ابتدا گونه را انتخاب کنید"}/>}/><FormControl><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
     {isOtherBreed&&<TextField label="نام نژاد" value={customBreed} onChange={e=>setCustomBreed(e.target.value)} helperText="نام نژاد می‌تواند فارسی یا انگلیسی باشد."/>}
     <Box className="pet-birth-card"><Typography variant="subtitle2">تاریخ تولد شمسی</Typography><Typography color="text.secondary" variant="caption">سال کافی است؛ اگر ماه و روز وارد نشود، فروردین و روز یکم ذخیره می‌شود. سن تا امروز خودکار محاسبه می‌شود.</Typography><div className="form-row birth-row"><FormControl><InputLabel>سال</InputLabel><Select label="سال" value={birth.year} onChange={e=>setBirthPart("year",String(e.target.value))}>{jalaliYears.map(y=><MenuItem key={y} value={String(y)}>{y}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>ماه، اختیاری</InputLabel><Select label="ماه، اختیاری" value={birth.month} onChange={e=>setBirthPart("month",String(e.target.value))}><MenuItem value="">فروردین پیش‌فرض</MenuItem>{persianMonths.map((m,i)=><MenuItem key={m} value={String(i+1)}>{m}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>روز، اختیاری</InputLabel><Select label="روز، اختیاری" value={birth.day} onChange={e=>setBirthPart("day",String(e.target.value))}><MenuItem value="">روز ۱ پیش‌فرض</MenuItem>{Array.from({length:jalaliMonthDays(birth.year,birth.month)},(_,i)=>i+1).map(day=><MenuItem key={day} value={String(day)}>{day}</MenuItem>)}</Select></FormControl></div><div className="calculated-age"><span>سن محاسبه‌شده تا امروز</span><b>{calculatedAge}</b></div></Box>
     <div className="form-row"><TextField label="وزن فعلی" value={values.current_weight} onChange={e=>setValues(v=>({...v,current_weight:decimalOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"decimal"}}}/><TextField label="شماره میکروچیپ" value={values.microchip_number} onChange={e=>setValues(v=>({...v,microchip_number:numericOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"numeric"}}} helperText="فقط عدد؛ اعداد فارسی خودکار تبدیل می‌شوند."/></div>

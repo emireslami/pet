@@ -42,6 +42,10 @@ Deno.serve(async (request) => {
     const input = await request.json();
     const name = String(input.name || "").trim();
     const species = String(input.species || "").trim();
+    const speciesId = input.species_id ? String(input.species_id) : null;
+    const breedId = input.breed_id ? String(input.breed_id) : null;
+    const customSpecies = String(input.custom_species || "").trim();
+    const customBreed = String(input.custom_breed || "").trim();
     const currentWeight = decimalOnly(input.current_weight);
     const microchipNumber = numericOnly(input.microchip_number);
     if (!name || !species) throw new Error("نام و گونه پت الزامی است");
@@ -58,6 +62,10 @@ Deno.serve(async (request) => {
         name,
         species,
         breed: input.breed || null,
+        species_id: speciesId,
+        breed_id: breedId,
+        custom_species_text: customSpecies || null,
+        custom_breed_text: customBreed || null,
         gender: input.gender || null,
         birth_date: input.birth_date || null,
         current_weight: currentWeight ? Number(currentWeight) : null,
@@ -80,6 +88,27 @@ Deno.serve(async (request) => {
       body: JSON.stringify({ pet_id: pet.id, user_id: user.id, role: "owner", can_edit: true }),
     });
     if (!memberResponse.ok) throw new Error("ایجاد دسترسی مالک انجام نشد");
+
+    const customEntries = [];
+    if (customSpecies) {
+      customEntries.push({ user_id: user.id, pet_id: pet.id, type: "SPECIES", species_id: speciesId, raw_value: customSpecies });
+    }
+    if (customBreed) {
+      customEntries.push({ user_id: user.id, pet_id: pet.id, type: "BREED", species_id: speciesId, raw_value: customBreed });
+    }
+    if (customEntries.length) {
+      const customResponse = await fetch(`${supabaseUrl}/rest/v1/custom_pet_taxonomy_entries`, {
+        method: "POST",
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify(customEntries),
+      });
+      if (!customResponse.ok) throw new Error("ثبت مقدار سفارشی گونه یا نژاد انجام نشد");
+    }
 
     return json({ ok: true, pet });
   } catch (error) {
