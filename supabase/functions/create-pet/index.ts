@@ -47,7 +47,6 @@ Deno.serve(async (request) => {
     const customSpecies = String(input.custom_species || "").trim();
     const customBreed = String(input.custom_breed || "").trim();
     const currentWeight = decimalOnly(input.current_weight);
-    const microchipNumber = numericOnly(input.microchip_number);
     if (!name || !species) throw new Error("نام و گونه پت الزامی است");
 
     const petResponse = await fetch(`${supabaseUrl}/rest/v1/pets?select=*`, {
@@ -69,7 +68,7 @@ Deno.serve(async (request) => {
         gender: input.gender || null,
         birth_date: input.birth_date || null,
         current_weight: currentWeight ? Number(currentWeight) : null,
-        microchip_number: microchipNumber || null,
+        color: input.color || null,
         created_by: user.id,
       }),
     });
