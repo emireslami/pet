@@ -67,6 +67,7 @@ Deno.serve(async (request) => {
         custom_breed_text: customBreed || null,
         gender: input.gender || null,
         birth_date: input.birth_date || null,
+        birth_date_jalali: input.birth_date_jalali || null,
         current_weight: currentWeight ? Number(currentWeight) : null,
         color: input.color || null,
         created_by: user.id,
