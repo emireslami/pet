@@ -5,10 +5,8 @@ import {
   DescriptionRounded as FileTextOutlined,
   FavoriteRounded as HeartOutlined,
   PhoneIphoneRounded as MobileOutlined,
-  AddRounded as PlusOutlined,
   VerifiedUserRounded as SafetyCertificateOutlined,
   GroupsRounded as TeamOutlined,
-  PersonRounded as UserOutlined,
 } from "@mui/icons-material";
 import { Button, Chip } from "@mui/material";
 
@@ -36,20 +34,24 @@ export default function LandingPage() {
           <div className="hero-trust"><span><SafetyCertificateOutlined /> اطلاعات امن و خصوصی</span><span><MobileOutlined /> طراحی‌شده برای موبایل</span></div>
         </div>
 
-        <div className="hero-visual" aria-label="نمایی از داشبورد Vetrica">
+        <div className="hero-visual creative-hero" aria-label="پت‌های سالم با پرونده دیجیتال Vetrica">
           <div className="visual-glow" />
-          <div className="phone-frame">
-            <div className="phone-top"><span>۹:۴۱</span><i /></div>
-            <div className="phone-brand"><span>V</span><div><b>Vetrica</b><small>پرونده سلامت پت‌ها</small></div><span className="mini-avatar"><UserOutlined /></span></div>
-            <div className="fresh-preview"><HeartOutlined /><h3>حساب شما آماده است</h3><p>اولین پرونده پت خود را بسازید و ثبت سوابق پزشکی را شروع کنید.</p><button><PlusOutlined /> ساخت اولین پرونده</button></div>
-            <div className="fresh-checks"><span><CheckCircleFilled /> بدون اطلاعات نمایشی</span><span><SafetyCertificateOutlined /> فضای خصوصی شما</span><span><FileTextOutlined /> آماده ثبت اطلاعات واقعی</span></div>
+          <div className="pet-stage">
+            <figure className="hero-pet hero-pet-dog"><img src="/pets/default-dog.jpg" alt="سگ با پرونده سلامت دیجیتال"/><figcaption><span><b>پرونده سلامت</b><small>همیشه به‌روز و در دسترس</small></span><CheckCircleFilled/></figcaption></figure>
+            <figure className="hero-pet hero-pet-cat"><img src="/pets/default-cat.jpg" alt="گربه با پرونده سلامت دیجیتال"/></figure>
+            <div className="health-orbit"><HeartOutlined/><b>یک عمر مراقبت</b><small>در یک پرونده</small></div>
           </div>
-          <div className="floating-card float-vaccine"><span><SafetyCertificateOutlined /></span><div><b>فضای امن و خصوصی</b><small>فقط افراد مجاز دسترسی دارند</small></div></div>
-          <div className="floating-card float-family"><span><TeamOutlined /></span><div><b>دسترسی قابل مدیریت</b><small>مشاهده یا ثبت اطلاعات</small></div></div>
+          <div className="floating-card float-vaccine"><span><CheckCircleFilled /></span><div><b>واکسن بعدی</b><small>یادآوری هوشمند و به‌موقع</small></div></div>
+          <div className="floating-card float-family"><span><TeamOutlined /></span><div><b>پرونده مشترک</b><small>همراه خانواده و دامپزشک</small></div></div>
         </div>
       </section>
 
       <section className="trust-strip"><span>تاریخچه درمان، همیشه در دسترس</span><div>{["واکسن‌ها","داروها","آزمایش‌ها","هزینه‌ها","اسناد پزشکی"].map(x=><b key={x}><CheckCircleFilled /> {x}</b>)}</div></section>
+
+      <section className="pet-story">
+        <div className="pet-story-images"><img className="story-dog" src="/pets/default-dog.jpg" alt="پرونده سلامت سگ"/><img className="story-cat" src="/pets/default-cat.jpg" alt="پرونده سلامت گربه"/><div className="story-badge"><FileTextOutlined/><b>هیچ سابقه‌ای گم نمی‌شود</b></div></div>
+        <div className="pet-story-copy"><small>از اولین روز تا سال‌های مراقبت</small><h2>زندگی آن‌ها پر از لحظه است.<br/>سلامت‌شان باید یک تاریخچه کامل داشته باشد.</h2><p>هر نسخه، واکسن، آزمایش و توصیه دامپزشک به بخشی قابل جستجو از پرونده پت تبدیل می‌شود؛ مرتب، امن و همیشه همراه شما.</p><a href="/login"><Button variant="contained" size="large" endIcon={<ArrowLeftOutlined/>}>ساخت اولین پرونده</Button></a></div>
+      </section>
 
       <section className="landing-features" id="features">
         <div className="landing-section-title"><small>یکپارچگی اطلاعات سلامت</small><h2>یک عمر مراقبت، یک پرونده</h2><p>از اولین واکسن تا درمان‌های دوره‌ای، هر رویداد پزشکی قابل رهگیری و هر سند قابل جستجو باقی می‌ماند.</p></div>
