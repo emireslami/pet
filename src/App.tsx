@@ -6,7 +6,7 @@ import {
   SearchRounded, SettingsRounded, TimelineRounded,
 } from "@mui/icons-material";
 import {
-  Alert, Avatar, Badge, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog,
+  Alert, Autocomplete, Avatar, Badge, Box, Button, Card, CardContent, Chip, CircularProgress, Dialog,
   DialogActions, DialogContent, DialogTitle, Divider, Drawer, FormControl, IconButton,
   InputLabel, List, ListItemButton, ListItemIcon, ListItemText, MenuItem, Paper, Select,
   Stack, Tab, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Tabs,
@@ -36,13 +36,42 @@ function EmptyPanel({title,text,action}:{title:string;text:string;action?:React.
 }
 
 const OTHER_OPTION = "سایر";
-const speciesOptions = ["سگ","گربه","پرنده","خرگوش",OTHER_OPTION];
-const breedLibrary: Record<string,string[]> = {
-  سگ: ["گلدن رتریور","لابرادور رتریور","ژرمن شپرد","هاسکی","پودل","شیتزو","پاگ","بولداگ فرانسوی","بیگل","مالتیز",OTHER_OPTION],
-  گربه: ["پرشین","اسکاتیش فولد","بریتیش شورت‌هیر","سیامی","مین کون","راگدال","اسفینکس","دی‌اس‌اچ / خیابانی",OTHER_OPTION],
-  پرنده: ["عروس هلندی","مرغ عشق","کاسکو","قناری","طوطی برزیلی","فنچ",OTHER_OPTION],
-  خرگوش: ["لوپ هلندی","مینی لوپ","نژاد هلندی","لاین‌هد","آنگورا","رکس",OTHER_OPTION],
-  [OTHER_OPTION]: [OTHER_OPTION],
+type PetOption = { fa:string; en:string; emoji?:string; value?:string };
+const optionValue = (option:PetOption) => option.value || option.fa;
+const optionLabel = (option:PetOption) => `${option.emoji ? `${option.emoji} ` : ""}${option.fa} / ${option.en}`;
+const searchText = (option:PetOption) => `${option.fa} ${option.en} ${option.value || ""} ${option.emoji || ""}`.toLowerCase();
+const filterPetOptions = (options:PetOption[],state:{inputValue:string}) => {
+  const query=toEnglishDigits(state.inputValue).trim().toLowerCase();
+  if(!query)return options;
+  return options.filter(option=>searchText(option).includes(query));
+};
+const speciesOptions: PetOption[] = [
+  {fa:"سگ",en:"Dog",emoji:"🐶"},
+  {fa:"گربه",en:"Cat",emoji:"🐱"},
+  {fa:"پرنده",en:"Bird",emoji:"🐦"},
+  {fa:"خرگوش",en:"Rabbit",emoji:"🐰"},
+  {fa:OTHER_OPTION,en:"Other",emoji:"✨"},
+];
+const breedLibrary: Record<string,PetOption[]> = {
+  سگ: [
+    {fa:"گلدن رتریور",en:"Golden Retriever"},{fa:"لابرادور رتریور",en:"Labrador Retriever"},{fa:"ژرمن شپرد",en:"German Shepherd"},
+    {fa:"هاسکی",en:"Husky"},{fa:"پودل",en:"Poodle"},{fa:"شیتزو",en:"Shih Tzu"},{fa:"پاگ",en:"Pug"},
+    {fa:"بولداگ فرانسوی",en:"French Bulldog"},{fa:"بیگل",en:"Beagle"},{fa:"مالتیز",en:"Maltese"},{fa:OTHER_OPTION,en:"Other"},
+  ],
+  گربه: [
+    {fa:"پرشین",en:"Persian"},{fa:"اسکاتیش فولد",en:"Scottish Fold"},{fa:"بریتیش شورت‌هیر",en:"British Shorthair"},
+    {fa:"سیامی",en:"Siamese"},{fa:"مین کون",en:"Maine Coon"},{fa:"راگدال",en:"Ragdoll"},{fa:"اسفینکس",en:"Sphynx"},
+    {fa:"دی‌اس‌اچ / خیابانی",en:"Domestic Shorthair / Street Cat"},{fa:OTHER_OPTION,en:"Other"},
+  ],
+  پرنده: [
+    {fa:"عروس هلندی",en:"Cockatiel"},{fa:"مرغ عشق",en:"Budgerigar / Budgie"},{fa:"کاسکو",en:"African Grey Parrot"},
+    {fa:"قناری",en:"Canary"},{fa:"طوطی برزیلی",en:"Lovebird"},{fa:"فنچ",en:"Finch"},{fa:OTHER_OPTION,en:"Other"},
+  ],
+  خرگوش: [
+    {fa:"لوپ هلندی",en:"Holland Lop"},{fa:"مینی لوپ",en:"Mini Lop"},{fa:"نژاد هلندی",en:"Dutch Rabbit"},
+    {fa:"لاین‌هد",en:"Lionhead"},{fa:"آنگورا",en:"Angora"},{fa:"رکس",en:"Rex"},{fa:OTHER_OPTION,en:"Other"},
+  ],
+  [OTHER_OPTION]: [{fa:OTHER_OPTION,en:"Other"}],
 };
 const persianMonths = ["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
 const toEnglishDigits = (value:string) => value
@@ -124,12 +153,14 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
     if(photo&&created?.id){const upload=await supabase.storage.from("pet-documents").upload(`${created.id}/avatar`,photo,{contentType:photo.type,upsert:true});if(upload.error)setError("پرونده ساخته شد، اما بارگذاری عکس انجام نشد.");}
     setBusy(false);resetForm();onClose();onSaved();
   };
-  const breedOptions=breedLibrary[values.species]||[OTHER_OPTION],isOtherSpecies=values.species===OTHER_OPTION,isOtherBreed=values.breed===OTHER_OPTION;
+  const breedOptions=breedLibrary[values.species]||breedLibrary[OTHER_OPTION],isOtherSpecies=values.species===OTHER_OPTION,isOtherBreed=values.breed===OTHER_OPTION;
+  const selectedSpecies=speciesOptions.find(option=>optionValue(option)===values.species)||null;
+  const selectedBreed=breedOptions.find(option=>optionValue(option)===values.breed)||null;
   const calculatedAge=calculateAgeText(birth.year,birth.month,birth.day);
   return <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{paper:{className:"rtl-pet-dialog",sx:{direction:"rtl",textAlign:"right"}}}}><Box component="form" onSubmit={save}><DialogTitle>ساخت پرونده پت</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>{error&&<Alert severity="error">{error}</Alert>}<Box className="pet-photo-picker" component="label">{photoPreview?<img src={photoPreview} alt="پیش‌نمایش عکس پت"/>:<><img src={values.species==="گربه"?"/pets/default-cat.jpg":"/pets/default-dog.jpg"} alt="عکس پیش‌فرض پت"/><span>افزودن عکس پت</span></>}<input hidden type="file" accept="image/*" onChange={e=>{const selected=e.target.files?.[0];if(!selected)return;if(selected.size>5*1024*1024)return setError("حجم عکس باید کمتر از ۵ مگابایت باشد.");setPhoto(selected);setPhotoPreview(URL.createObjectURL(selected));setError("");}}/></Box>
-    <div className="form-row"><TextField label="نام پت" value={values.name} onChange={set("name")} required helperText="فارسی یا انگلیسی قابل قبول است."/><FormControl required><InputLabel>گونه</InputLabel><Select label="گونه" value={values.species} onChange={e=>setSpecies(String(e.target.value))}>{speciesOptions.map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
+    <div className="form-row"><TextField label="نام پت" value={values.name} onChange={set("name")} required helperText="فارسی یا انگلیسی قابل قبول است."/><Autocomplete options={speciesOptions} value={selectedSpecies} filterOptions={filterPetOptions} getOptionLabel={optionLabel} isOptionEqualToValue={(option,value)=>optionValue(option)===optionValue(value)} onChange={(_,option)=>setSpecies(option?optionValue(option):"")} renderOption={(props,option)=><li {...props} key={optionValue(option)}><span className="option-emoji">{option.emoji}</span><span className="option-text"><b>{option.fa}</b><small>{option.en}</small></span></li>} renderInput={params=><TextField {...params} label="گونه" required placeholder="جستجو: سگ یا Dog"/>}/></div>
     {isOtherSpecies&&<TextField label="نام گونه" value={customSpecies} onChange={e=>setCustomSpecies(e.target.value)} required helperText="اگر گونه در فهرست نیست، نام فارسی یا انگلیسی آن را وارد کنید."/>}
-    <div className="form-row"><FormControl disabled={!values.species}><InputLabel>نژاد</InputLabel><Select label="نژاد" value={values.breed} onChange={set("breed")}>{breedOptions.map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
+    <div className="form-row"><Autocomplete disabled={!values.species} options={breedOptions} value={selectedBreed} filterOptions={filterPetOptions} getOptionLabel={optionLabel} isOptionEqualToValue={(option,value)=>optionValue(option)===optionValue(value)} onChange={(_,option)=>setValues(v=>({...v,breed:option?optionValue(option):""}))} renderOption={(props,option)=><li {...props} key={optionValue(option)}><span className="option-text"><b>{option.fa}</b><small>{option.en}</small></span></li>} renderInput={params=><TextField {...params} label="نژاد" placeholder={values.species?"جستجو: Golden یا گلدن":"ابتدا گونه را انتخاب کنید"}/>}/><FormControl><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
     {isOtherBreed&&<TextField label="نام نژاد" value={customBreed} onChange={e=>setCustomBreed(e.target.value)} helperText="نام نژاد می‌تواند فارسی یا انگلیسی باشد."/>}
     <Box className="pet-birth-card"><Typography variant="subtitle2">تاریخ تولد شمسی</Typography><Typography color="text.secondary" variant="caption">سال و ماه کافی است؛ اگر روز وارد نشود، روز یکم ماه ذخیره می‌شود. سن تا امروز خودکار محاسبه می‌شود.</Typography><div className="form-row birth-row"><FormControl><InputLabel>سال</InputLabel><Select label="سال" value={birth.year} onChange={e=>setBirthPart("year",String(e.target.value))}>{jalaliYears.map(y=><MenuItem key={y} value={String(y)}>{y}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>ماه</InputLabel><Select label="ماه" value={birth.month} onChange={e=>setBirthPart("month",String(e.target.value))}>{persianMonths.map((m,i)=><MenuItem key={m} value={String(i+1)}>{m}</MenuItem>)}</Select></FormControl><TextField label="روز، اختیاری" value={birth.day} onChange={e=>setBirthPart("day",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div><div className="calculated-age"><span>سن محاسبه‌شده تا امروز</span><b>{calculatedAge}</b></div></Box>
     <div className="form-row"><TextField label="وزن فعلی" value={values.current_weight} onChange={e=>setValues(v=>({...v,current_weight:decimalOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"decimal"}}}/><TextField label="شماره میکروچیپ" value={values.microchip_number} onChange={e=>setValues(v=>({...v,microchip_number:numericOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"numeric"}}} helperText="فقط عدد؛ اعداد فارسی خودکار تبدیل می‌شوند."/></div>
