@@ -112,7 +112,7 @@ export default function App() {
           message.error("خروج از حساب انجام نشد. دوباره تلاش کنید.");
           throw error;
         }
-        window.location.replace("/app");
+        window.location.replace("/");
       },
     });
   };
