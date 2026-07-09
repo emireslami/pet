@@ -50,6 +50,7 @@ const toEnglishDigits = (value:string) => value
   .replace(/[٠-٩]/g, digit => String("٠١٢٣٤٥٦٧٨٩".indexOf(digit)));
 const numericOnly = (value:string) => toEnglishDigits(value).replace(/\D/g,"");
 const decimalOnly = (value:string) => toEnglishDigits(value).replace(/[^\d.]/g,"").replace(/(\..*)\./g,"$1");
+const faNumber = new Intl.NumberFormat("fa-IR");
 const pad2 = (value:number) => String(value).padStart(2,"0");
 function jalaliToGregorian(jy:number,jm:number,jd:number) {
   jy+=1595;let days=-355668+(365*jy)+Math.floor(jy/33)*8+Math.floor(((jy%33)+3)/4)+jd+(jm<7?(jm-1)*31:((jm-7)*30)+186);
@@ -85,6 +86,17 @@ function formatJalaliDate(iso?:string|null) {
 }
 const thisJalaliYear = gregorianToJalali(new Date().getFullYear(),new Date().getMonth()+1,new Date().getDate())[0];
 const jalaliYears = Array.from({length:35},(_,i)=>thisJalaliYear-i);
+function calculateAgeText(jy:string,jm:string,jd:string) {
+  if(!jy||!jm)return "";
+  const birthYear=Number(jy),birthMonth=Number(jm),birthDay=Number(jd||"1");
+  const today=new Date(),[todayYear,todayMonth,todayDay]=gregorianToJalali(today.getFullYear(),today.getMonth()+1,today.getDate());
+  let totalMonths=(todayYear-birthYear)*12+(todayMonth-birthMonth);
+  if(todayDay<birthDay)totalMonths-=1;
+  if(totalMonths<0)return "تاریخ تولد در آینده است.";
+  const years=Math.floor(totalMonths/12),months=totalMonths%12;
+  if(!years&&!months)return "کمتر از یک ماه";
+  return [years?`${faNumber.format(years)} سال`:"",months?`${faNumber.format(months)} ماه`:""].filter(Boolean).join(" و ");
+}
 
 function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:()=>void}) {
   const [values,setValues]=useState({name:"",species:"",breed:"",gender:"",birth_date:"",current_weight:"",microchip_number:""});
@@ -123,13 +135,14 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
     setBusy(false);resetForm();onClose();onSaved();
   };
   const breedOptions=breedLibrary[values.species]||[OTHER_OPTION],isOtherSpecies=values.species===OTHER_OPTION,isOtherBreed=values.breed===OTHER_OPTION;
+  const calculatedAge=calculateAgeText(birth.year,birth.month,birth.day);
   return <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{paper:{className:"rtl-pet-dialog",sx:{direction:"rtl",textAlign:"right"}}}}><Box component="form" onSubmit={save}><DialogTitle>ساخت پرونده پت</DialogTitle><DialogContent><Stack spacing={2} sx={{pt:1}}>{error&&<Alert severity="error">{error}</Alert>}<Box className="pet-photo-picker" component="label">{photoPreview?<img src={photoPreview} alt="پیش‌نمایش عکس پت"/>:<><img src={values.species==="گربه"?"/pets/default-cat.jpg":"/pets/default-dog.jpg"} alt="عکس پیش‌فرض پت"/><span>افزودن عکس پت</span></>}<input hidden type="file" accept="image/*" onChange={e=>{const selected=e.target.files?.[0];if(!selected)return;if(selected.size>5*1024*1024)return setError("حجم عکس باید کمتر از ۵ مگابایت باشد.");setPhoto(selected);setPhotoPreview(URL.createObjectURL(selected));setError("");}}/></Box>
     <div className="form-row"><TextField label="نام پت" value={values.name} onChange={set("name")} required helperText="فارسی یا انگلیسی قابل قبول است."/><FormControl required><InputLabel>گونه</InputLabel><Select label="گونه" value={values.species} onChange={e=>setSpecies(String(e.target.value))}>{speciesOptions.map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
     {isOtherSpecies&&<TextField label="نام گونه" value={customSpecies} onChange={e=>setCustomSpecies(e.target.value)} required helperText="اگر گونه در فهرست نیست، نام فارسی یا انگلیسی آن را وارد کنید."/>}
     <div className="form-row"><FormControl disabled={!values.species}><InputLabel>نژاد</InputLabel><Select label="نژاد" value={values.breed} onChange={set("breed")}>{breedOptions.map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>جنسیت</InputLabel><Select label="جنسیت" value={values.gender} onChange={set("gender")}>{["نر","ماده"].map(x=><MenuItem key={x} value={x}>{x}</MenuItem>)}</Select></FormControl></div>
     {isOtherBreed&&<TextField label="نام نژاد" value={customBreed} onChange={e=>setCustomBreed(e.target.value)} helperText="نام نژاد می‌تواند فارسی یا انگلیسی باشد."/>}
-    <Box className="pet-birth-card"><Typography variant="subtitle2">تاریخ تولد شمسی</Typography><Typography color="text.secondary" variant="caption">سال و ماه کافی است؛ اگر روز وارد نشود، روز یکم ماه ذخیره می‌شود.</Typography><div className="form-row birth-row"><FormControl><InputLabel>سال</InputLabel><Select label="سال" value={birth.year} onChange={e=>setBirthPart("year",String(e.target.value))}>{jalaliYears.map(y=><MenuItem key={y} value={String(y)}>{y}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>ماه</InputLabel><Select label="ماه" value={birth.month} onChange={e=>setBirthPart("month",String(e.target.value))}>{persianMonths.map((m,i)=><MenuItem key={m} value={String(i+1)}>{m}</MenuItem>)}</Select></FormControl><TextField label="روز، اختیاری" value={birth.day} onChange={e=>setBirthPart("day",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div></Box>
-    <Box className="pet-birth-card subtle"><Typography variant="subtitle2">یا سن تقریبی را وارد کنید</Typography><div className="form-row"><TextField label="سال" value={age.years} onChange={e=>setAgePart("years",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/><TextField label="ماه" value={age.months} onChange={e=>setAgePart("months",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div></Box>
+    <Box className="pet-birth-card"><Typography variant="subtitle2">تاریخ تولد شمسی</Typography><Typography color="text.secondary" variant="caption">سال و ماه کافی است؛ اگر روز وارد نشود، روز یکم ماه ذخیره می‌شود. سن تا امروز خودکار محاسبه می‌شود.</Typography><div className="form-row birth-row"><FormControl><InputLabel>سال</InputLabel><Select label="سال" value={birth.year} onChange={e=>setBirthPart("year",String(e.target.value))}>{jalaliYears.map(y=><MenuItem key={y} value={String(y)}>{faNumber.format(y)}</MenuItem>)}</Select></FormControl><FormControl><InputLabel>ماه</InputLabel><Select label="ماه" value={birth.month} onChange={e=>setBirthPart("month",String(e.target.value))}>{persianMonths.map((m,i)=><MenuItem key={m} value={String(i+1)}>{m}</MenuItem>)}</Select></FormControl><TextField label="روز، اختیاری" value={birth.day} onChange={e=>setBirthPart("day",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div>{calculatedAge&&<div className="calculated-age"><span>سن محاسبه‌شده تا امروز</span><b>{calculatedAge}</b></div>}</Box>
+    <Box className="pet-birth-card subtle"><Typography variant="subtitle2">اگر تاریخ تولد را نمی‌دانید</Typography><Typography color="text.secondary" variant="caption">سن تقریبی را وارد کنید تا تاریخ تولد تقریبی از ماه جاری محاسبه شود.</Typography><div className="form-row"><TextField label="سال" value={age.years} onChange={e=>setAgePart("years",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/><TextField label="ماه" value={age.months} onChange={e=>setAgePart("months",e.target.value)} slotProps={{htmlInput:{inputMode:"numeric",maxLength:2}}}/></div></Box>
     <div className="form-row"><TextField label="وزن فعلی" value={values.current_weight} onChange={e=>setValues(v=>({...v,current_weight:decimalOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"decimal"}}}/><TextField label="شماره میکروچیپ" value={values.microchip_number} onChange={e=>setValues(v=>({...v,microchip_number:numericOnly(e.target.value)}))} slotProps={{htmlInput:{inputMode:"numeric"}}} helperText="فقط عدد؛ اعداد فارسی خودکار تبدیل می‌شوند."/></div>
   </Stack></DialogContent><DialogActions><Button onClick={onClose}>انصراف</Button><Button variant="contained" type="submit" disabled={busy}>{busy?<CircularProgress size={20}/>:"ساخت پرونده"}</Button></DialogActions></Box></Dialog>;
 }
