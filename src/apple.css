@@ -22,7 +22,6 @@ body{background:var(--canvas);color:var(--ink);-webkit-font-smoothing:antialiase
   .mobile-app-title small{font:600 10px Arial;color:var(--muted);letter-spacing:.2px}
   .mobile-app-title b{font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px}
   .header-actions{gap:7px}
-  .header-actions .header-search{display:none}
   .header-actions .MuiButton-root{width:36px;height:36px;background:transparent;border:0;box-shadow:none}
   .header .avatar{display:none}
   .content{padding:14px 14px calc(98px + env(safe-area-inset-bottom));max-width:none}
