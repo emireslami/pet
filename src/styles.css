@@ -32,6 +32,7 @@ body{background:#F8FAFC;color:#0F172A}.brand>span,.landing-logo span{background:
 .responsive-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .responsive-form-grid.date-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
 .form-actions{justify-content:flex-end;padding-top:4px}
+.app .MuiInputBase-input,.MuiDialog-root .MuiInputBase-input,.app .MuiSelect-select,.MuiDialog-root .MuiSelect-select{direction:rtl;text-align:start}
 .app input[dir="ltr"],.app textarea[dir="ltr"],.MuiDialog-root input[dir="ltr"],.MuiDialog-root textarea[dir="ltr"]{direction:ltr!important;text-align:left!important}
 .app .MuiInputAdornment-root,.MuiDialog-root .MuiInputAdornment-root{white-space:nowrap}
 @media(max-width:760px){.responsive-form-grid,.responsive-form-grid.date-grid{grid-template-columns:1fr}.form-section-head,.form-section-body{padding:16px}}

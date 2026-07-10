@@ -26,12 +26,12 @@ export const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: {
         root: { borderRadius: 12 },
-        input: { textAlign: "right" },
+        input: { direction: "rtl", textAlign: "start" },
       },
     },
-    MuiInputBase: { styleOverrides: { input: { textAlign: "right" } } },
-    MuiInputLabel: { styleOverrides: { root: { transformOrigin: "top right" } } },
-    MuiFormHelperText: { styleOverrides: { root: { textAlign: "right", marginRight: 14, marginLeft: 0 } } },
+    MuiInputBase: { styleOverrides: { root: { direction: "rtl" }, input: { direction: "rtl", textAlign: "start" } } },
+    MuiInputLabel: { styleOverrides: { root: { transformOrigin: "top start" } } },
+    MuiFormHelperText: { styleOverrides: { root: { textAlign: "start" } } },
     MuiSelect: { defaultProps: { size: "small", fullWidth: true } },
     MuiDialog: { styleOverrides: { paper: { borderRadius: 22 } } },
     MuiCard: { styleOverrides: { root: { border: "1px solid #E5E5EA", boxShadow: "none" } } },
