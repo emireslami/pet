@@ -15,6 +15,7 @@ import {
 import SmartEntryModal from "./SmartEntryModal";
 import SharePetModal from "./SharePetModal";
 import { AppSelectField, FormSection, PersianDateFields } from "./FormComponents";
+import { compressImageFile } from "./lib/imageCompression";
 import { hasSupabase, supabase } from "./lib/supabase";
 import type { MedicalRecord, Pet, PetWeightRecord, PreventiveCareRecord, RabiesAntibodyCertificate, SurgicalHistoryRecord, UserProfile } from "./types";
 
@@ -202,7 +203,7 @@ function PetForm({open,onClose,onSaved}:{open:boolean;onClose:()=>void;onSaved:(
     const{data:createResult,error:createError}=await supabase.functions.invoke("create-pet",{body:payload});
     const created=createResult?.pet as {id?:string}|undefined;
     if(createError||createResult?.error||!created?.id){setBusy(false);return setError(createResult?.error||"ذخیره پرونده انجام نشد.");}
-    if(photo&&created?.id){const upload=await supabase.storage.from("pet-documents").upload(`${created.id}/avatar`,photo,{contentType:photo.type,upsert:true});if(upload.error)setError("پرونده ساخته شد، اما بارگذاری عکس انجام نشد.");}
+    if(photo&&created?.id){const avatar=await compressImageFile(photo,{maxWidth:1200,maxHeight:1200,quality:.76}).catch(()=>photo);const upload=await supabase.storage.from("pet-documents").upload(`${created.id}/avatar`,avatar,{contentType:avatar.type,upsert:true});if(upload.error)setError("پرونده ساخته شد، اما بارگذاری عکس انجام نشد.");}
     setBusy(false);resetForm();onClose();onSaved();
   };
   const isOtherSpecies=selectedSpecies?.is_custom_allowed||selectedSpecies?.code==="OTHER",isOtherBreed=selectedBreed?.name_en==="Other"||selectedBreed?.name_fa===OTHER_OPTION;
