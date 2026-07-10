@@ -89,6 +89,24 @@ Deno.serve(async (request) => {
     });
     if (!memberResponse.ok) throw new Error("ایجاد دسترسی مالک انجام نشد");
 
+    if (currentWeight) {
+      const weightResponse = await fetch(`${supabaseUrl}/rest/v1/pet_weight_records`, {
+        method: "POST",
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          "Content-Type": "application/json",
+          Prefer: "return=minimal",
+        },
+        body: JSON.stringify({
+          pet_id: pet.id,
+          weight_kg: Number(currentWeight),
+          notes: "وزن اولیه پرونده",
+        }),
+      });
+      if (!weightResponse.ok) throw new Error("ثبت وزن اولیه انجام نشد");
+    }
+
     const customEntries = [];
     if (customSpecies) {
       customEntries.push({ user_id: user.id, pet_id: pet.id, type: "SPECIES", species_id: speciesId, raw_value: customSpecies });

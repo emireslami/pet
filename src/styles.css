@@ -35,4 +35,7 @@ body{background:#F8FAFC;color:#0F172A}.brand>span,.landing-logo span{background:
 .app .MuiInputBase-input,.MuiDialog-root .MuiInputBase-input,.app .MuiSelect-select,.MuiDialog-root .MuiSelect-select{direction:rtl;text-align:start}
 .app input[dir="ltr"],.app textarea[dir="ltr"],.MuiDialog-root input[dir="ltr"],.MuiDialog-root textarea[dir="ltr"]{direction:ltr!important;text-align:left!important}
 .app .MuiInputAdornment-root,.MuiDialog-root .MuiInputAdornment-root{white-space:nowrap}
+.app .MuiOutlinedInput-root:has(.MuiInputAdornment-root),.MuiDialog-root .MuiOutlinedInput-root:has(.MuiInputAdornment-root){direction:ltr}
+.app .MuiOutlinedInput-root:has(.MuiInputAdornment-root) .MuiInputBase-input,.MuiDialog-root .MuiOutlinedInput-root:has(.MuiInputAdornment-root) .MuiInputBase-input{direction:rtl;text-align:start}
+.app .MuiInputAdornment-positionEnd,.MuiDialog-root .MuiInputAdornment-positionEnd,.app .MuiInputAdornment-positionStart,.MuiDialog-root .MuiInputAdornment-positionStart{order:-1;margin-left:8px;margin-right:0}
 @media(max-width:760px){.responsive-form-grid,.responsive-form-grid.date-grid{grid-template-columns:1fr}.form-section-head,.form-section-body{padding:16px}}
