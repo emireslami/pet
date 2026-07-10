@@ -21,8 +21,18 @@ export const theme = createTheme({
   components: {
     MuiButton: { defaultProps: { disableElevation: true }, styleOverrides: { root: { borderRadius: 12, minHeight: 42 } } },
     MuiPaper: { styleOverrides: { root: { backgroundImage: "none" } } },
-    MuiTextField: { defaultProps: { size: "small" } },
-    MuiOutlinedInput: { styleOverrides: { root: { borderRadius: 12 } } },
+    MuiTextField: { defaultProps: { size: "small", fullWidth: true, variant: "outlined" } },
+    MuiFormControl: { defaultProps: { size: "small", fullWidth: true, variant: "outlined" } },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: { borderRadius: 12 },
+        input: { textAlign: "right" },
+      },
+    },
+    MuiInputBase: { styleOverrides: { input: { textAlign: "right" } } },
+    MuiInputLabel: { styleOverrides: { root: { transformOrigin: "top right" } } },
+    MuiFormHelperText: { styleOverrides: { root: { textAlign: "right", marginRight: 14, marginLeft: 0 } } },
+    MuiSelect: { defaultProps: { size: "small", fullWidth: true } },
     MuiDialog: { styleOverrides: { paper: { borderRadius: 22 } } },
     MuiCard: { styleOverrides: { root: { border: "1px solid #E5E5EA", boxShadow: "none" } } },
   },
